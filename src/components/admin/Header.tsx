@@ -5,9 +5,10 @@ interface HeaderProps {
   pageTitle: string;
   adminName: string;
   onMenuClick: () => void;
+  onLogout: () => void;
 }
 
-const Header: React.FC<HeaderProps> = ({ pageTitle, adminName, onMenuClick }) => {
+const Header: React.FC<HeaderProps> = ({ pageTitle, adminName, onMenuClick, onLogout }) => {
   const [showNotifications, setShowNotifications] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
 
@@ -119,7 +120,7 @@ const Header: React.FC<HeaderProps> = ({ pageTitle, adminName, onMenuClick }) =>
                   Pengaturan
                 </button>
                 <hr className="my-2" />
-                <button className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 rounded-lg">
+                <button onClick={onLogout} className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 rounded-lg">
                   Keluar
                 </button>
               </div>

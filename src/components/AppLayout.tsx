@@ -119,6 +119,7 @@ const AppLayout: React.FC = () => {
           pageTitle={getPageTitle()} 
           adminName={adminName}
           onMenuClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
+          onLogout={handleLogout}
         />
 
         {/* Page Content */}
