@@ -38,7 +38,7 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-green-50 via-white to-green-50 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-gradient-to-br from-green-200 via-white to-green-200 flex items-center justify-center p-4">
       {/* Background Pattern */}
       <div className="absolute inset-0 overflow-hidden">
         <div className="absolute -top-40 -right-40 w-80 h-80 bg-green-200 rounded-full opacity-20 blur-3xl" />
@@ -48,10 +48,13 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
       <div className="relative w-full max-w-md">
         {/* Logo */}
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-green-500 to-green-600 rounded-2xl shadow-lg shadow-green-500/30 mb-4">
+          {/* <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-green-500 to-green-600 rounded-2xl shadow-lg shadow-green-500/30 mb-4">
             <Leaf className="w-9 h-9 text-white" />
+          </div> */}
+          <div className="inline-flex items-center justify-center mb-4 w-24 h-18">
+            <img src="https://www.tokotrubus.com/img/logo-toko-trubus.png" alt="" />
           </div>
-          <h1 className="text-2xl font-bold text-gray-800">Toko Tani</h1>
+          {/* <h1 className="text-2xl font-bold text-gray-800">Toko Trubus</h1> */}
           <p className="text-gray-500 mt-1">Admin Dashboard</p>
         </div>
 
@@ -167,7 +170,7 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
 
         {/* Footer */}
         <p className="text-center text-sm text-gray-500 mt-6">
-          &copy; 2024 Toko Tani. All rights reserved.
+          &copy; 2024 Toko Trubus. All rights reserved.
         </p>
       </div>
     </div>
