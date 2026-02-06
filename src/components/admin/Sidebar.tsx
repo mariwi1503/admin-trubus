@@ -1,15 +1,17 @@
 import React from 'react';
-import { 
-  LayoutDashboard, 
-  Users, 
-  UserCog, 
-  FileText, 
-  Package, 
-  ShoppingCart, 
-  Settings, 
+import {
+  LayoutDashboard,
+  Users,
+  UserCog,
+  FileText,
+  Package,
+  ShoppingCart,
+  Settings,
   LogOut,
   ChevronLeft,
-  Leaf
+  Leaf,
+  Archive,
+  Briefcase
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -27,21 +29,22 @@ const menuItems = [
   { id: 'articles', label: 'Artikel', icon: FileText },
   { id: 'products', label: 'Produk', icon: Package },
   { id: 'orders', label: 'Pesanan', icon: ShoppingCart },
+  { id: 'arsip', label: 'Arsip', icon: Archive },
+  { id: 'clients', label: 'Klien', icon: Briefcase },
   { id: 'settings', label: 'Pengaturan', icon: Settings },
 ];
 
-const Sidebar: React.FC<SidebarProps> = ({ 
-  currentPage, 
-  setCurrentPage, 
-  isCollapsed, 
+const Sidebar: React.FC<SidebarProps> = ({
+  currentPage,
+  setCurrentPage,
+  isCollapsed,
   setIsCollapsed,
-  onLogout 
+  onLogout
 }) => {
   return (
-    <aside 
-      className={`fixed left-0 top-0 h-full bg-gradient-to-b from-green-800 to-green-900 text-white transition-all duration-300 z-50 ${
-        isCollapsed ? 'w-20' : 'w-64'
-      }`}
+    <aside
+      className={`fixed left-0 top-0 h-full bg-gradient-to-b from-green-800 to-green-900 text-white transition-all duration-300 z-50 ${isCollapsed ? 'w-20' : 'w-64'
+        }`}
     >
       {/* Logo */}
       <div className="flex items-center justify-between p-4 border-b border-green-700">
@@ -56,7 +59,7 @@ const Sidebar: React.FC<SidebarProps> = ({
             </div>
           )}
         </div>
-        <button 
+        <button
           onClick={() => setIsCollapsed(!isCollapsed)}
           className="p-1.5 hover:bg-green-700 rounded-lg transition-colors"
         >
@@ -73,11 +76,10 @@ const Sidebar: React.FC<SidebarProps> = ({
             <button
               key={item.id}
               onClick={() => setCurrentPage(item.id)}
-              className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all ${
-                isActive 
-                  ? 'bg-white text-green-800 shadow-lg' 
+              className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all ${isActive
+                  ? 'bg-white text-green-800 shadow-lg'
                   : 'hover:bg-green-700 text-green-100'
-              }`}
+                }`}
             >
               <Icon className={`w-5 h-5 ${isActive ? 'text-green-600' : ''}`} />
               {!isCollapsed && <span className="font-medium">{item.label}</span>}

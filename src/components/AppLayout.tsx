@@ -14,11 +14,13 @@ import ArticleManagement from './admin/ArticleManagement';
 import ProductManagement from './admin/ProductManagement';
 import OrderManagement from './admin/OrderManagement';
 import SystemSettings from './admin/SystemSettings';
+import ArchiveManagement from './admin/ArchiveManagement';
+import ClientManagement from './admin/ClientManagement';
 
 const AppLayout: React.FC = () => {
   const { sidebarOpen, toggleSidebar } = useAppContext();
   const isMobile = useIsMobile();
-  
+
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [adminName, setAdminName] = useState('Admin');
   const [currentPage, setCurrentPage] = useState('dashboard');
@@ -39,7 +41,7 @@ const AppLayout: React.FC = () => {
 
   const handleLogin = async (email: string, password: string) => {
     setIsInitializing(true);
-    
+
     // Save session
     const sessionData = {
       email,
@@ -47,10 +49,10 @@ const AppLayout: React.FC = () => {
       loginTime: new Date().toISOString(),
     };
     localStorage.setItem('admin_session', JSON.stringify(sessionData));
-    
+
     // Initialize database with seed data
     await initializeDatabase();
-    
+
     setIsLoggedIn(true);
     setAdminName('Administrator');
     setIsInitializing(false);
@@ -71,6 +73,8 @@ const AppLayout: React.FC = () => {
       products: 'Kelola Produk',
       orders: 'Kelola Pesanan',
       settings: 'Pengaturan Sistem',
+      arsip: 'Arsip Dokumen',
+      clients: 'Kelola Klien',
     };
     return titles[currentPage] || 'Dashboard';
   };
@@ -91,6 +95,10 @@ const AppLayout: React.FC = () => {
         return <OrderManagement />;
       case 'settings':
         return <SystemSettings />;
+      case 'arsip':
+        return <ArchiveManagement />;
+      case 'clients':
+        return <ClientManagement />;
       default:
         return <Dashboard />;
     }
@@ -115,8 +123,8 @@ const AppLayout: React.FC = () => {
       {/* Main Content */}
       <div className={`transition-all duration-300 ${isSidebarCollapsed ? 'ml-20' : 'ml-64'}`}>
         {/* Header */}
-        <Header 
-          pageTitle={getPageTitle()} 
+        <Header
+          pageTitle={getPageTitle()}
           adminName={adminName}
           onMenuClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
           onLogout={handleLogout}
@@ -150,7 +158,7 @@ const AppLayout: React.FC = () => {
 
       {/* Mobile Overlay */}
       {isMobile && !isSidebarCollapsed && (
-        <div 
+        <div
           className="fixed inset-0 bg-black/50 z-40 lg:hidden"
           onClick={() => setIsSidebarCollapsed(true)}
         />
