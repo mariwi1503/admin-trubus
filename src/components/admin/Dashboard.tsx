@@ -37,11 +37,7 @@ const Dashboard: React.FC = () => {
 
   return (
     <div className="p-6 bg-gray-50 min-h-screen space-y-6">
-      <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-bold text-gray-800">Dashboard Ringkasan</h1>
-        <p className="text-sm text-gray-500">Update terakhir: {new Date().toLocaleDateString('id-ID')}</p>
-      </div>
-
+      
       {/* Stats Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {stats.map((stat, index) => {
