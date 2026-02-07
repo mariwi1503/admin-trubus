@@ -16,6 +16,7 @@ import OrderManagement from './admin/OrderManagement';
 import SystemSettings from './admin/SystemSettings';
 import ArchiveManagement from './admin/ArchiveManagement';
 import ClientManagement from './admin/ClientManagement';
+import QRCodeManagement from './admin/QRCodeManagement';
 
 const AppLayout: React.FC = () => {
   const { sidebarOpen, toggleSidebar } = useAppContext();
@@ -71,10 +72,13 @@ const AppLayout: React.FC = () => {
       experts: 'Kelola Ahli',
       articles: 'Kelola Artikel',
       products: 'Kelola Produk',
+      'products-all': 'Semua Produk',
+      'products-store': 'Produk di Toko',
       orders: 'Kelola Pesanan',
       settings: 'Pengaturan Sistem',
       arsip: 'Arsip Dokumen',
       clients: 'Kelola Klien',
+      qrcode: 'Manajemen QR Code',
     };
     return titles[currentPage] || 'Dashboard';
   };
@@ -99,6 +103,8 @@ const AppLayout: React.FC = () => {
         return <ArchiveManagement />;
       case 'clients':
         return <ClientManagement />;
+      case 'qrcode':
+        return <QRCodeManagement />;
       default:
         return <Dashboard />;
     }

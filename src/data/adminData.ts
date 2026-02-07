@@ -50,6 +50,9 @@ export interface Product {
   image: string;
   description: string;
   rating: number;
+  sku?: string;
+  uom?: string;
+  isDisplayed?: boolean;
 }
 
 export interface Order {

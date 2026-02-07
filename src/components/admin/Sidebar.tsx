@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   LayoutDashboard,
   Users,
@@ -9,9 +9,12 @@ import {
   Settings,
   LogOut,
   ChevronLeft,
+  ChevronDown,
+  ChevronRight,
   Leaf,
   Archive,
-  Briefcase
+  Briefcase,
+  QrCode
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -22,13 +25,20 @@ interface SidebarProps {
   onLogout: () => void;
 }
 
-const menuItems = [
+interface MenuItem {
+  id: string;
+  label: string;
+  icon: React.ElementType;
+}
+
+const menuItems: MenuItem[] = [
   { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { id: 'users', label: 'Pengguna', icon: Users },
   { id: 'experts', label: 'Ahli Pertanian', icon: UserCog },
   { id: 'articles', label: 'Artikel', icon: FileText },
   { id: 'products', label: 'Produk', icon: Package },
   { id: 'orders', label: 'Pesanan', icon: ShoppingCart },
+  { id: 'qrcode', label: 'QR Code', icon: QrCode },
   { id: 'arsip', label: 'Arsip', icon: Archive },
   { id: 'clients', label: 'Klien', icon: Briefcase },
   { id: 'settings', label: 'Pengaturan', icon: Settings },
@@ -68,21 +78,24 @@ const Sidebar: React.FC<SidebarProps> = ({
       </div>
 
       {/* Navigation */}
-      <nav className="p-4 space-y-2">
+      <nav className="p-4 space-y-2 overflow-y-auto max-h-[calc(100vh-160px)] custom-scrollbar">
         {menuItems.map((item) => {
           const Icon = item.icon;
           const isActive = currentPage === item.id;
+
           return (
             <button
               key={item.id}
               onClick={() => setCurrentPage(item.id)}
-              className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all ${isActive
-                  ? 'bg-white text-green-800 shadow-lg'
-                  : 'hover:bg-green-700 text-green-100'
+              className={`w-full flex items-center justify-between px-4 py-3 rounded-lg transition-all ${isActive
+                ? 'bg-white text-green-800 shadow-lg'
+                : 'hover:bg-green-700 text-green-100'
                 }`}
             >
-              <Icon className={`w-5 h-5 ${isActive ? 'text-green-600' : ''}`} />
-              {!isCollapsed && <span className="font-medium">{item.label}</span>}
+              <div className="flex items-center gap-3">
+                <Icon className={`w-5 h-5 ${isActive ? 'text-green-600' : ''}`} />
+                {!isCollapsed && <span className="font-medium">{item.label}</span>}
+              </div>
             </button>
           );
         })}

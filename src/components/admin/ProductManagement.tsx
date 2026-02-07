@@ -1,12 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { Search, Plus, Edit2, Trash2, Star, Package, Download, AlertTriangle, Loader2, RefreshCw, Cloud, CloudOff, QrCode, Eye } from 'lucide-react';
+import { Search, Plus, Edit2, Trash2, Star, Package, Download, AlertTriangle, Loader2, RefreshCw, Cloud, CloudOff } from 'lucide-react';
 import { Product } from '@/data/adminData';
 import { productsService } from '@/lib/supabaseService';
 import Modal from './Modal';
-
-interface ProductWithQR extends Product {
-  qrCode?: string;
-}
 
 const formatCurrency = (value: number) => {
   return new Intl.NumberFormat('id-ID', {
@@ -16,19 +12,18 @@ const formatCurrency = (value: number) => {
   }).format(value);
 };
 
-const ProductManagement: React.FC = () => {
-  const [products, setProducts] = useState<ProductWithQR[]>([]);
+export default function ProductManagement() {
+  const [products, setProducts] = useState<Product[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState<string>('all');
   const [filterCategory, setFilterCategory] = useState<string>('all');
+  const [filterDisplay, setFilterDisplay] = useState<string>('all');
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+  const [isConnected, setIsConnected] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
-  const [isQRModalOpen, setIsQRModalOpen] = useState(false);
-  const [selectedProduct, setSelectedProduct] = useState<ProductWithQR | null>(null);
-  const [selectedQRProduct, setSelectedQRProduct] = useState<ProductWithQR | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
-  const [isConnected, setIsConnected] = useState(true);
   const [formData, setFormData] = useState({
     name: '',
     category: '',
@@ -37,21 +32,26 @@ const ProductManagement: React.FC = () => {
     description: '',
     image: '',
     status: 'active' as 'active' | 'inactive' | 'out_of_stock',
+    sku: '',
+    uom: '',
+    isDisplayed: true,
   });
 
   const categories = ['Benih', 'Pupuk', 'Alat', 'Pestisida', 'Perlengkapan'];
+  const uoms = ['Pcs', 'Kg', 'Pack', 'Botol', 'Liter', 'Zak'];
 
   useEffect(() => {
     loadProducts();
 
     const subscription = productsService.subscribe((updatedProducts) => {
-      // Preserve existing QR codes when updates come in
-      setProducts(prevProducts => {
-        return updatedProducts.map(p => ({
-          ...p,
-          qrCode: `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${p.id}`
-        }));
-      });
+      // Inject dummy data if missing
+      const productsWithDummyData = updatedProducts.map(p => ({
+        ...p,
+        sku: p.sku || `TRB-12345-XXXX`,
+        uom: p.uom || uoms[Math.floor(Math.random() * uoms.length)],
+        isDisplayed: p.isDisplayed !== undefined ? p.isDisplayed : true,
+      }));
+      setProducts(productsWithDummyData);
       setIsConnected(true);
     });
 
@@ -64,12 +64,14 @@ const ProductManagement: React.FC = () => {
     setIsLoading(true);
     try {
       const data = await productsService.getAll();
-      // Initialize with QR codes for all products
-      const productsWithQR = data.map(p => ({
+      // Inject dummy data
+      const productsWithDummyData = data.map(p => ({
         ...p,
-        qrCode: `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${p.id}`
+        sku: p.sku || `TRB-${p.id.padStart(4, '0')}`,
+        uom: p.uom || uoms[Math.floor(Math.random() * uoms.length)],
+        isDisplayed: p.isDisplayed !== undefined ? p.isDisplayed : true,
       }));
-      setProducts(productsWithQR);
+      setProducts(productsWithDummyData);
       setIsConnected(true);
     } catch (error) {
       console.error('Error loading products:', error);
@@ -83,10 +85,16 @@ const ProductManagement: React.FC = () => {
     const matchesSearch = product.name.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesStatus = filterStatus === 'all' || product.status === filterStatus;
     const matchesCategory = filterCategory === 'all' || product.category === filterCategory;
-    return matchesSearch && matchesStatus && matchesCategory;
+    const matchesDisplay = filterDisplay === 'all'
+      ? true
+      : filterDisplay === 'displayed'
+        ? product.isDisplayed === true
+        : product.isDisplayed === false;
+
+    return matchesSearch && matchesStatus && matchesCategory && matchesDisplay;
   });
 
-  const handleOpenModal = (product?: ProductWithQR) => {
+  const handleOpenModal = (product?: Product) => {
     if (product) {
       setSelectedProduct(product);
       setFormData({
@@ -97,6 +105,9 @@ const ProductManagement: React.FC = () => {
         description: product.description,
         image: product.image,
         status: product.status,
+        sku: product.sku || '',
+        uom: product.uom || 'Pcs',
+        isDisplayed: product.isDisplayed ?? true,
       });
     } else {
       setSelectedProduct(null);
@@ -108,6 +119,9 @@ const ProductManagement: React.FC = () => {
         description: '',
         image: '',
         status: 'active',
+        sku: `TRB-${Math.floor(Math.random() * 10000).toString().padStart(4, '0')}`,
+        uom: 'Pcs',
+        isDisplayed: true,
       });
     }
     setIsModalOpen(true);
@@ -154,8 +168,6 @@ const ProductManagement: React.FC = () => {
       }
     }
   };
-
-
 
   const handleStockUpdate = async (product: Product, newStock: number) => {
     try {
@@ -245,6 +257,16 @@ const ProductManagement: React.FC = () => {
           </select>
 
           <select
+            value={filterDisplay}
+            onChange={(e) => setFilterDisplay(e.target.value)}
+            className="px-4 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+          >
+            <option value="all">Semua Tampilan</option>
+            <option value="displayed">Tampil di Toko</option>
+            <option value="hidden">Disembunyikan</option>
+          </select>
+
+          <select
             value={filterCategory}
             onChange={(e) => setFilterCategory(e.target.value)}
             className="px-4 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
@@ -294,8 +316,7 @@ const ProductManagement: React.FC = () => {
                   <th className="text-left px-6 py-4 text-sm font-semibold text-gray-600">Harga</th>
                   <th className="text-left px-6 py-4 text-sm font-semibold text-gray-600">Stok</th>
                   <th className="text-left px-6 py-4 text-sm font-semibold text-gray-600">Terjual</th>
-                  <th className="text-left px-6 py-4 text-sm font-semibold text-gray-600">QR Code</th>
-                  <th className="text-left px-6 py-4 text-sm font-semibold text-gray-600">Rating</th>
+                  <th className="text-left px-6 py-4 text-sm font-semibold text-gray-600">Tampil di Toko</th>
                   <th className="text-left px-6 py-4 text-sm font-semibold text-gray-600">Status</th>
                   <th className="text-center px-6 py-4 text-sm font-semibold text-gray-600">Aksi</th>
                 </tr>
@@ -342,23 +363,12 @@ const ProductManagement: React.FC = () => {
                     </td>
                     <td className="px-6 py-4 text-sm text-gray-700">{product.sold}</td>
                     <td className="px-6 py-4">
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setSelectedQRProduct(product);
-                          setIsQRModalOpen(true);
-                        }}
-                        className="flex items-center gap-2 px-3 py-1.5 bg-blue-50 text-blue-700 rounded-lg hover:bg-blue-100 transition-colors text-xs font-medium"
-                      >
-                        <Eye className="w-3.5 h-3.5" />
-                        Preview
-                      </button>
-                    </td>
-                    <td className="px-6 py-4">
-                      <div className="flex items-center gap-1">
-                        <Star className="w-4 h-4 text-amber-400 fill-amber-400" />
-                        <span className="text-sm text-gray-700">{product.rating}</span>
-                      </div>
+                      <span className={`px-3 py-1 rounded-full text-xs font-medium ${product.isDisplayed
+                        ? 'bg-blue-100 text-blue-700'
+                        : 'bg-gray-100 text-gray-700'
+                        }`}>
+                        {product.isDisplayed ? 'Iya' : 'Tidak'}
+                      </span>
                     </td>
                     <td className="px-6 py-4">{getStatusBadge(product.status)}</td>
                     <td className="px-6 py-4">
@@ -420,6 +430,44 @@ const ProductManagement: React.FC = () => {
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">SKU</label>
+                  <input
+                    type="text"
+                    value={formData.sku}
+                    onChange={(e) => setFormData({ ...formData, sku: e.target.value })}
+                    className="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+                    placeholder="Kode SKU"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">UOM (Satuan)</label>
+                  <select
+                    value={formData.uom}
+                    onChange={(e) => setFormData({ ...formData, uom: e.target.value })}
+                    className="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+                  >
+                    {uoms.map(u => (
+                      <option key={u} value={u}>{u}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2 pt-2">
+                <input
+                  type="checkbox"
+                  id="isDisplayed"
+                  checked={formData.isDisplayed}
+                  onChange={(e) => setFormData({ ...formData, isDisplayed: e.target.checked })}
+                  className="w-4 h-4 text-green-600 border-gray-300 rounded focus:ring-green-500"
+                />
+                <label htmlFor="isDisplayed" className="text-sm font-medium text-gray-700 select-none cursor-pointer">
+                  Tampilkan di Toko
+                </label>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Kategori</label>
                   <select
                     value={formData.category}
@@ -446,17 +494,6 @@ const ProductManagement: React.FC = () => {
                 </div>
               </div>
             </div>
-
-            {selectedProduct && (
-              <div className="w-32 flex flex-col items-center justify-center p-3 bg-gray-50 rounded-lg border border-gray-100 h-fit">
-                <span className="text-xs font-medium text-gray-500 mb-2">QR Code</span>
-                <img
-                  src={selectedProduct.qrCode || `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${selectedProduct.id}`}
-                  alt="Product QR"
-                  className="w-full h-auto mix-blend-multiply"
-                />
-              </div>
-            )}
           </div>
 
           <div className="grid grid-cols-2 gap-4">
@@ -557,77 +594,6 @@ const ProductManagement: React.FC = () => {
           </div>
         </div>
       </Modal>
-
-      {/* QR Code Preview Modal */}
-      <Modal
-        isOpen={isQRModalOpen}
-        onClose={() => setIsQRModalOpen(false)}
-        title=""
-        size="sm"
-      >
-        <div className="flex flex-col items-center">
-          {/* Card Container */}
-          <div className="bg-white border-2 border-green-600 rounded-2xl overflow-hidden w-full max-w-sm shadow-lg mb-6">
-            <div className="p-6 text-center space-y-4">
-              {/* Header */}
-              <div>
-                <h2 className="text-5xl font-serif text-green-700 tracking-wide font-bold mb-1">TRUBUS</h2>
-                <p className="text-red-600 font-bold text-sm tracking-wider uppercase">Solusi Tanaman Buah Anda</p>
-              </div>
-
-              {/* Content Grid */}
-              <div className="flex items-center justify-between gap-4 mt-8 pt-4">
-                <div className="text-left flex-1">
-                  <h3 className="text-lg font-bold text-gray-900 leading-tight mb-4 uppercase">
-                    {selectedQRProduct?.name}
-                  </h3>
-                  <p className="text-2xl font-bold text-gray-900">
-                    {formatCurrency(selectedQRProduct?.price || 0)}
-                  </p>
-                </div>
-                <div className="flex-shrink-0">
-                  {selectedQRProduct?.qrCode && (
-                    <img
-                      src={selectedQRProduct.qrCode}
-                      alt="QR Code"
-                      className="w-28 h-28 object-contain mix-blend-multiply"
-                    />
-                  )}
-                </div>
-              </div>
-
-              {/* Info Footer Line */}
-              <div className="flex justify-between items-end text-sm font-bold text-gray-900 pt-2">
-                <span>Toko Trubus</span>
-                <span>{new Date().toLocaleDateString('id-ID', { day: '2-digit', month: '2-digit', year: '2-digit' }).replace(/\//g, '.')}</span>
-              </div>
-            </div>
-
-            {/* Green Footer Bar */}
-            <div className="bg-green-600 py-3 text-center">
-              <p className="text-white font-bold text-sm">www.tokotrubus.com</p>
-            </div>
-          </div>
-
-          {/* Action Buttons */}
-          <div className="flex gap-3 w-full">
-            <button
-              onClick={() => setIsQRModalOpen(false)}
-              className="flex-1 px-4 py-2.5 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors text-gray-700"
-            >
-              Tutup
-            </button>
-            <button
-              className="flex-1 px-4 py-2.5 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors flex items-center justify-center gap-2"
-            >
-              <Download className="w-4 h-4" />
-              Download Label
-            </button>
-          </div>
-        </div>
-      </Modal>
     </div>
   );
 };
-
-export default ProductManagement;
