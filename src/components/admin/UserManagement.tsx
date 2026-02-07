@@ -34,7 +34,7 @@ const UserManagement: React.FC = () => {
   // Load data and setup real-time subscription
   useEffect(() => {
     loadUsers();
-    
+
     const subscription = usersService.subscribe((updatedUsers) => {
       setUsers(updatedUsers);
       setIsConnected(true);
@@ -61,7 +61,7 @@ const UserManagement: React.FC = () => {
 
   const filteredUsers = users.filter(user => {
     const matchesSearch = user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         user.email.toLowerCase().includes(searchTerm.toLowerCase());
+      user.email.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesRole = filterRole === 'all' || user.role === filterRole;
     const matchesStatus = filterStatus === 'all' || user.status === filterStatus;
     return matchesSearch && matchesRole && matchesStatus;
@@ -194,7 +194,7 @@ const UserManagement: React.FC = () => {
               className="pl-10 pr-4 py-2.5 border border-gray-200 rounded-lg w-full sm:w-64 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
             />
           </div>
-          
+
           <select
             value={filterRole}
             onChange={(e) => setFilterRole(e.target.value)}
@@ -204,7 +204,7 @@ const UserManagement: React.FC = () => {
             <option value="customer">Customer</option>
             <option value="admin">Admin</option>
           </select>
-          
+
           <select
             value={filterStatus}
             onChange={(e) => setFilterStatus(e.target.value)}
@@ -218,7 +218,7 @@ const UserManagement: React.FC = () => {
         </div>
 
         <div className="flex gap-2">
-          <button 
+          <button
             onClick={loadUsers}
             className="flex items-center gap-2 px-4 py-2.5 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
           >
@@ -228,7 +228,7 @@ const UserManagement: React.FC = () => {
             <Download className="w-5 h-5" />
             <span className="hidden sm:inline">Export</span>
           </button>
-          <button 
+          <button
             onClick={() => handleOpenModal()}
             className="flex items-center gap-2 px-4 py-2.5 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
           >
@@ -261,11 +261,15 @@ const UserManagement: React.FC = () => {
               </thead>
               <tbody className="divide-y divide-gray-100">
                 {filteredUsers.map((user) => (
-                  <tr key={user.id} className="hover:bg-gray-50 transition-colors">
+                  <tr
+                    key={user.id}
+                    className="hover:bg-gray-50 transition-colors cursor-pointer"
+                    onClick={() => handleOpenModal(user)}
+                  >
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-3">
-                        <img 
-                          src={user.avatar} 
+                        <img
+                          src={user.avatar}
                           alt={user.name}
                           className="w-10 h-10 rounded-full object-cover"
                         />
@@ -284,8 +288,8 @@ const UserManagement: React.FC = () => {
                     <td className="px-6 py-4 text-sm text-gray-700">{user.totalOrders}</td>
                     <td className="px-6 py-4 text-sm font-medium text-gray-700">{formatCurrency(user.totalSpent)}</td>
                     <td className="px-6 py-4">
-                      <div className="flex items-center justify-center gap-2">
-                        <button 
+                      <div className="flex items-center justify-center gap-2" onClick={(e) => e.stopPropagation()}>
+                        <button
                           onClick={() => handleOpenModal(user)}
                           className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
                           title="Edit"
@@ -293,7 +297,7 @@ const UserManagement: React.FC = () => {
                           <Edit2 className="w-4 h-4" />
                         </button>
                         {user.status === 'banned' ? (
-                          <button 
+                          <button
                             onClick={() => handleToggleStatus(user, 'active')}
                             className="p-2 text-green-600 hover:bg-green-50 rounded-lg transition-colors"
                             title="Aktifkan"
@@ -301,7 +305,7 @@ const UserManagement: React.FC = () => {
                             <CheckCircle className="w-4 h-4" />
                           </button>
                         ) : (
-                          <button 
+                          <button
                             onClick={() => handleToggleStatus(user, 'banned')}
                             className="p-2 text-amber-600 hover:bg-amber-50 rounded-lg transition-colors"
                             title="Blokir"
@@ -309,7 +313,7 @@ const UserManagement: React.FC = () => {
                             <Ban className="w-4 h-4" />
                           </button>
                         )}
-                        <button 
+                        <button
                           onClick={() => {
                             setSelectedUser(user);
                             setIsDeleteModalOpen(true);
@@ -327,7 +331,7 @@ const UserManagement: React.FC = () => {
             </table>
           </div>
         )}
-        
+
         {!isLoading && filteredUsers.length === 0 && (
           <div className="text-center py-12">
             <p className="text-gray-500">Tidak ada user ditemukan</p>

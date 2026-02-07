@@ -218,7 +218,14 @@ const ArchiveManagement: React.FC = () => {
             </thead>
             <tbody className="divide-y divide-gray-100">
               {filteredArchives.map((archive) => (
-                <tr key={archive.id} className="hover:bg-gray-50 transition-colors">
+                <tr
+                  key={archive.id}
+                  className="hover:bg-gray-50 transition-colors cursor-pointer"
+                  onClick={() => {
+                    setSelectedArchive(archive);
+                    setIsPreviewModalOpen(true);
+                  }}
+                >
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-3">
                       <div className={`p-2 rounded-lg ${archive.type === 'Kontrak' ? 'bg-purple-50 text-purple-600' : 'bg-blue-50 text-blue-600'}`}>
@@ -250,7 +257,7 @@ const ArchiveManagement: React.FC = () => {
                   </td>
                   <td className="px-6 py-4">{getStatusBadge(archive.status)}</td>
                   <td className="px-6 py-4">
-                    <div className="flex items-center justify-center gap-2">
+                    <div className="flex items-center justify-center gap-2" onClick={(e) => e.stopPropagation()}>
                       <button
                         onClick={() => {
                           setSelectedArchive(archive);

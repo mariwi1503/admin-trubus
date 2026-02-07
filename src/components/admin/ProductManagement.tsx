@@ -47,10 +47,9 @@ const ProductManagement: React.FC = () => {
     const subscription = productsService.subscribe((updatedProducts) => {
       // Preserve existing QR codes when updates come in
       setProducts(prevProducts => {
-        const qrMap = new Map(prevProducts.map(p => [p.id, p.qrCode]));
         return updatedProducts.map(p => ({
           ...p,
-          qrCode: qrMap.get(p.id) || (Math.random() > 0.5 ? `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${p.id}` : undefined)
+          qrCode: `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${p.id}`
         }));
       });
       setIsConnected(true);
@@ -65,10 +64,10 @@ const ProductManagement: React.FC = () => {
     setIsLoading(true);
     try {
       const data = await productsService.getAll();
-      // Initialize with random QR codes for ~50% of products
+      // Initialize with QR codes for all products
       const productsWithQR = data.map(p => ({
         ...p,
-        qrCode: Math.random() > 0.5 ? `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${p.id}` : undefined
+        qrCode: `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${p.id}`
       }));
       setProducts(productsWithQR);
       setIsConnected(true);
@@ -156,20 +155,7 @@ const ProductManagement: React.FC = () => {
     }
   };
 
-  const handleGenerateQR = (productId: string) => {
-    const newQR = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${productId}`;
 
-    setProducts(prev => prev.map(p => {
-      if (p.id === productId) {
-        return { ...p, qrCode: newQR };
-      }
-      return p;
-    }));
-
-    if (selectedProduct?.id === productId) {
-      setSelectedProduct(prev => prev ? { ...prev, qrCode: newQR } : null);
-    }
-  };
 
   const handleStockUpdate = async (product: Product, newStock: number) => {
     try {
@@ -356,30 +342,17 @@ const ProductManagement: React.FC = () => {
                     </td>
                     <td className="px-6 py-4 text-sm text-gray-700">{product.sold}</td>
                     <td className="px-6 py-4">
-                      {product.qrCode ? (
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setSelectedQRProduct(product);
-                            setIsQRModalOpen(true);
-                          }}
-                          className="flex items-center gap-2 px-3 py-1.5 bg-blue-50 text-blue-700 rounded-lg hover:bg-blue-100 transition-colors text-xs font-medium"
-                        >
-                          <Eye className="w-3.5 h-3.5" />
-                          Preview
-                        </button>
-                      ) : (
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleGenerateQR(product.id);
-                          }}
-                          className="flex items-center gap-2 px-3 py-1.5 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors text-xs font-medium"
-                        >
-                          <QrCode className="w-3.5 h-3.5" />
-                          Generate
-                        </button>
-                      )}
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setSelectedQRProduct(product);
+                          setIsQRModalOpen(true);
+                        }}
+                        className="flex items-center gap-2 px-3 py-1.5 bg-blue-50 text-blue-700 rounded-lg hover:bg-blue-100 transition-colors text-xs font-medium"
+                      >
+                        <Eye className="w-3.5 h-3.5" />
+                        Preview
+                      </button>
                     </td>
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-1">
@@ -477,23 +450,11 @@ const ProductManagement: React.FC = () => {
             {selectedProduct && (
               <div className="w-32 flex flex-col items-center justify-center p-3 bg-gray-50 rounded-lg border border-gray-100 h-fit">
                 <span className="text-xs font-medium text-gray-500 mb-2">QR Code</span>
-                {selectedProduct.qrCode ? (
-                  <img
-                    src={selectedProduct.qrCode}
-                    alt="Product QR"
-                    className="w-full h-auto mix-blend-multiply"
-                  />
-                ) : (
-                  <div className="flex flex-col items-center justify-center py-4 text-center">
-                    <QrCode className="w-8 h-8 text-gray-300 mb-2" />
-                    <button
-                      onClick={() => handleGenerateQR(selectedProduct.id)}
-                      className="text-[10px] text-blue-600 font-medium hover:text-blue-700 hover:underline"
-                    >
-                      Generate QR
-                    </button>
-                  </div>
-                )}
+                <img
+                  src={selectedProduct.qrCode || `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${selectedProduct.id}`}
+                  alt="Product QR"
+                  className="w-full h-auto mix-blend-multiply"
+                />
               </div>
             )}
           </div>

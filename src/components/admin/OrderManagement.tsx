@@ -61,7 +61,7 @@ const OrderManagement: React.FC = () => {
 
   useEffect(() => {
     loadOrders();
-    
+
     const subscription = ordersService.subscribe((updatedOrders) => {
       if (updatedOrders && updatedOrders.length > 0) {
         setOrders(updatedOrders);
@@ -97,7 +97,7 @@ const OrderManagement: React.FC = () => {
 
   const filteredOrders = orders.filter(order => {
     const matchesSearch = order.orderNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         order.customerName.toLowerCase().includes(searchTerm.toLowerCase());
+      order.customerName.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesStatus = filterStatus === 'all' || order.status === filterStatus;
     const matchesPayment = filterPayment === 'all' || order.paymentStatus === filterPayment;
     return matchesSearch && matchesStatus && matchesPayment;
@@ -106,10 +106,10 @@ const OrderManagement: React.FC = () => {
   const handleStatusChange = async (order: Order, newStatus: Order['status']) => {
     try {
       await ordersService.update(order.id, { status: newStatus });
-      
+
       // Update local state untuk feedback instan
       setOrders(prev => prev.map(o => o.id === order.id ? { ...o, status: newStatus } : o));
-      
+
       if (selectedOrder?.id === order.id) {
         setSelectedOrder({ ...selectedOrder, status: newStatus });
       }
@@ -121,7 +121,7 @@ const OrderManagement: React.FC = () => {
   const handlePaymentStatusChange = async (order: Order, newStatus: Order['paymentStatus']) => {
     try {
       await ordersService.update(order.id, { paymentStatus: newStatus });
-      
+
       // Update local state
       setOrders(prev => prev.map(o => o.id === order.id ? { ...o, paymentStatus: newStatus } : o));
 
@@ -246,7 +246,7 @@ const OrderManagement: React.FC = () => {
               className="pl-10 pr-4 py-2.5 border border-gray-200 rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-green-500 transition-all"
             />
           </div>
-          
+
           <select
             value={filterStatus}
             onChange={(e) => setFilterStatus(e.target.value)}
@@ -259,7 +259,7 @@ const OrderManagement: React.FC = () => {
             <option value="delivered">Selesai</option>
             <option value="cancelled">Dibatalkan</option>
           </select>
-          
+
           <select
             value={filterPayment}
             onChange={(e) => setFilterPayment(e.target.value)}
@@ -273,7 +273,7 @@ const OrderManagement: React.FC = () => {
         </div>
 
         <div className="flex gap-2">
-          <button 
+          <button
             onClick={loadOrders}
             className="flex items-center gap-2 px-4 py-2.5 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
             title="Refresh Data"
@@ -310,7 +310,14 @@ const OrderManagement: React.FC = () => {
               </thead>
               <tbody className="divide-y divide-gray-100">
                 {filteredOrders.map((order) => (
-                  <tr key={order.id} className="hover:bg-gray-50/80 transition-colors">
+                  <tr
+                    key={order.id}
+                    className="hover:bg-gray-50/80 transition-colors cursor-pointer"
+                    onClick={() => {
+                      setSelectedOrder(order);
+                      setIsDetailModalOpen(true);
+                    }}
+                  >
                     <td className="px-6 py-4">
                       <p className="font-bold text-gray-900">{order.orderNumber}</p>
                       <p className="text-xs text-gray-500 uppercase tracking-wider">{order.items.length} item dipesan</p>
@@ -335,8 +342,9 @@ const OrderManagement: React.FC = () => {
                     </td>
                     <td className="px-6 py-4">
                       <div className="flex items-center justify-center">
-                        <button 
-                          onClick={() => {
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
                             setSelectedOrder(order);
                             setIsDetailModalOpen(true);
                           }}
@@ -352,7 +360,7 @@ const OrderManagement: React.FC = () => {
             </table>
           </div>
         )}
-        
+
         {!isLoading && filteredOrders.length === 0 && (
           <div className="text-center py-20">
             <div className="bg-gray-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -386,23 +394,23 @@ const OrderManagement: React.FC = () => {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-               <div className="bg-gray-50 p-4 rounded-xl">
-                  <p className="text-xs font-bold text-gray-400 uppercase mb-2">Informasi Pembeli</p>
-                  <p className="font-bold text-gray-800">{selectedOrder.customerName}</p>
-                  <p className="text-sm text-gray-600">{selectedOrder.customerEmail}</p>
-                  <p className="text-sm text-gray-600 mt-2 italic">"{selectedOrder.shippingAddress}"</p>
-               </div>
-               <div className="bg-green-50 p-4 rounded-xl border border-green-100">
-                  <p className="text-xs font-bold text-green-600 uppercase mb-2">Ringkasan Pembayaran</p>
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm text-gray-600">Status:</span>
-                    {getPaymentBadge(selectedOrder.paymentStatus)}
-                  </div>
-                  <div className="flex justify-between items-center mt-2">
-                    <span className="text-sm text-gray-600">Total Tagihan:</span>
-                    <span className="font-bold text-green-700">{formatCurrency(selectedOrder.total)}</span>
-                  </div>
-               </div>
+              <div className="bg-gray-50 p-4 rounded-xl">
+                <p className="text-xs font-bold text-gray-400 uppercase mb-2">Informasi Pembeli</p>
+                <p className="font-bold text-gray-800">{selectedOrder.customerName}</p>
+                <p className="text-sm text-gray-600">{selectedOrder.customerEmail}</p>
+                <p className="text-sm text-gray-600 mt-2 italic">"{selectedOrder.shippingAddress}"</p>
+              </div>
+              <div className="bg-green-50 p-4 rounded-xl border border-green-100">
+                <p className="text-xs font-bold text-green-600 uppercase mb-2">Ringkasan Pembayaran</p>
+                <div className="flex justify-between items-center">
+                  <span className="text-sm text-gray-600">Status:</span>
+                  {getPaymentBadge(selectedOrder.paymentStatus)}
+                </div>
+                <div className="flex justify-between items-center mt-2">
+                  <span className="text-sm text-gray-600">Total Tagihan:</span>
+                  <span className="font-bold text-green-700">{formatCurrency(selectedOrder.total)}</span>
+                </div>
+              </div>
             </div>
 
             <div>
@@ -418,20 +426,20 @@ const OrderManagement: React.FC = () => {
             </div>
 
             <div className="pt-4 border-t space-y-4">
-               <div>
-                  <p className="text-sm font-bold text-gray-700 mb-2">Ubah Status Pesanan:</p>
-                  <div className="flex flex-wrap gap-2">
-                    {['pending', 'processing', 'shipped', 'delivered', 'cancelled'].map((s) => (
-                      <button
-                        key={s}
-                        onClick={() => handleStatusChange(selectedOrder, s as any)}
-                        className={`px-3 py-1.5 rounded-md text-xs font-bold transition-all ${selectedOrder.status === s ? 'bg-gray-800 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
-                      >
-                        {s.toUpperCase()}
-                      </button>
-                    ))}
-                  </div>
-               </div>
+              <div>
+                <p className="text-sm font-bold text-gray-700 mb-2">Ubah Status Pesanan:</p>
+                <div className="flex flex-wrap gap-2">
+                  {['pending', 'processing', 'shipped', 'delivered', 'cancelled'].map((s) => (
+                    <button
+                      key={s}
+                      onClick={() => handleStatusChange(selectedOrder, s as any)}
+                      className={`px-3 py-1.5 rounded-md text-xs font-bold transition-all ${selectedOrder.status === s ? 'bg-gray-800 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
+                    >
+                      {s.toUpperCase()}
+                    </button>
+                  ))}
+                </div>
+              </div>
             </div>
           </div>
         )}

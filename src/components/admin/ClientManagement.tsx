@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Search, Building2, Phone, Mail, MapPin, MoreVertical, Plus, Trash2, Edit, Eye, X, Calendar, FileText } from 'lucide-react';
+import { Search, Building2, Phone, Mail, MapPin, MoreVertical, Plus, Trash2, Edit, Eye, X, Calendar, FileText, Printer, Download, ChevronLeft, ChevronRight } from 'lucide-react';
 import Modal from './Modal';
 
 interface CooperationHistory {
@@ -83,6 +83,10 @@ const ClientManagement: React.FC = () => {
     const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
     const [selectedClient, setSelectedClient] = useState<Client | null>(null);
     const [isEditMode, setIsEditMode] = useState(false);
+
+    // Preview Modal State
+    const [isPreviewModalOpen, setIsPreviewModalOpen] = useState(false);
+    const [selectedHistory, setSelectedHistory] = useState<CooperationHistory | null>(null);
 
     // Form Data
     const [formData, setFormData] = useState<Omit<Client, 'id' | 'history'> & { id?: string }>({
@@ -443,7 +447,14 @@ const ClientManagement: React.FC = () => {
                             {selectedClient.history.length > 0 ? (
                                 <div className="space-y-3">
                                     {selectedClient.history.map(history => (
-                                        <div key={history.id} className="p-3 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
+                                        <div
+                                            key={history.id}
+                                            className="p-3 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors cursor-pointer"
+                                            onClick={() => {
+                                                setSelectedHistory(history);
+                                                setIsPreviewModalOpen(true);
+                                            }}
+                                        >
                                             <div className="flex justify-between items-start mb-1">
                                                 <p className="font-medium text-gray-900">{history.title}</p>
                                                 {getHistoryStatusBadge(history.status)}
@@ -486,6 +497,104 @@ const ClientManagement: React.FC = () => {
                         </div>
                     </div>
                 </Modal>
+            )}
+
+            {/* Document Preview Modal */}
+            {selectedHistory && isPreviewModalOpen && (
+                <div className="fixed inset-0 bg-black/70 z-[60] flex items-center justify-center p-4">
+                    <div className="bg-white rounded-xl shadow-2xl w-full max-w-4xl max-h-[90vh] flex flex-col overflow-hidden">
+                        {/* Toolbar */}
+                        <div className="bg-gray-800 text-white p-4 flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                                <div className="p-2 bg-white/10 rounded-lg">
+                                    <FileText className="w-5 h-5" />
+                                </div>
+                                <div>
+                                    <h3 className="font-semibold">{selectedHistory.title}</h3>
+                                    <p className="text-xs text-gray-400">2.4 MB • {selectedHistory.date}</p>
+                                </div>
+                            </div>
+                            <div className="flex items-center gap-2">
+                                <button className="p-2 hover:bg-white/10 rounded-lg transition-colors" title="Print">
+                                    <Printer className="w-5 h-5" />
+                                </button>
+                                <button className="p-2 hover:bg-white/10 rounded-lg transition-colors" title="Download">
+                                    <Download className="w-5 h-5" />
+                                </button>
+                                <div className="w-px h-6 bg-gray-600 mx-1"></div>
+                                <button
+                                    onClick={() => setIsPreviewModalOpen(false)}
+                                    className="p-2 hover:bg-red-500/20 hover:text-red-400 rounded-lg transition-colors"
+                                >
+                                    <X className="w-5 h-5" />
+                                </button>
+                            </div>
+                        </div>
+
+                        {/* Document Viewer Area */}
+                        <div className="flex-1 bg-gray-100 overflow-y-auto p-8 flex justify-center">
+                            <div className="bg-white shadow-lg w-full max-w-2xl min-h-[800px] p-12">
+                                <div className="mb-8 flex justify-between items-start border-b pb-8">
+                                    <div>
+                                        <h1 className="text-2xl font-bold text-gray-900 mb-2">{selectedHistory.type}</h1>
+                                        <p className="text-gray-500">No: DOC/{selectedHistory.id}/2024</p>
+                                    </div>
+                                    <div className="text-right">
+                                        <p className="font-bold text-green-700 text-xl">TRUBUS</p>
+                                        <p className="text-sm text-gray-500">Agriculture & Farming</p>
+                                    </div>
+                                </div>
+
+                                <div className="space-y-6 text-gray-700 font-serif leading-relaxed">
+                                    <p>
+                                        <strong>PERHATIAN:</strong> Ini adalah pratinjau dokumen dummy untuk tujuan demonstrasi.
+                                    </p>
+                                    <h2 className="text-lg font-bold text-gray-900 mt-6 mb-2">Pasal 1: Definisi</h2>
+                                    <p>
+                                        Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.
+                                    </p>
+                                    <p>
+                                        Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
+                                    </p>
+
+                                    <h2 className="text-lg font-bold text-gray-900 mt-6 mb-2">Pasal 2: Ruang Lingkup</h2>
+                                    <p>
+                                        Sed ut perspiciatis unde omnis iste natus error sit voluptatem accusantium doloremque laudantium, totam rem aperiam, eaque ipsa quae ab illo inventore veritatis et quasi architecto beatae vitae dicta sunt explicabo.
+                                    </p>
+
+                                    {selectedClient && (
+                                        <div className="mt-8 p-4 bg-gray-50 border border-gray-100 rounded-lg text-sm font-sans">
+                                            <p className="mb-1"><strong>Pihak Pertama:</strong> PT Trubus Indonesia</p>
+                                            <p><strong>Pihak Kedua:</strong> {selectedClient.name}</p>
+                                        </div>
+                                    )}
+
+                                    <div className="mt-16 flex justify-between text-center">
+                                        <div>
+                                            <p className="mb-16">Pihak Pertama</p>
+                                            <p className="font-bold border-t border-gray-400 pt-2 px-4">Direktur Utama</p>
+                                        </div>
+                                        <div>
+                                            <p className="mb-16">Pihak Kedua</p>
+                                            <p className="font-bold border-t border-gray-400 pt-2 px-4">{selectedClient?.contactPerson || 'Klien'}</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Footer Pagination */}
+                        <div className="bg-white border-t border-gray-200 p-3 flex items-center justify-center gap-4 text-sm text-gray-600">
+                            <button className="p-1 hover:bg-gray-100 rounded disabled:opacity-50" disabled>
+                                <ChevronLeft className="w-4 h-4" />
+                            </button>
+                            <span>Halaman 1 dari 5</span>
+                            <button className="p-1 hover:bg-gray-100 rounded">
+                                <ChevronRight className="w-4 h-4" />
+                            </button>
+                        </div>
+                    </div>
+                </div>
             )}
         </div>
     );
