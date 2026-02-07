@@ -261,9 +261,9 @@ export default function ProductManagement() {
             onChange={(e) => setFilterDisplay(e.target.value)}
             className="px-4 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
           >
-            <option value="all">Semua Tampilan</option>
+            <option value="all">Semua Tampil</option>
             <option value="displayed">Tampil di Toko</option>
-            <option value="hidden">Disembunyikan</option>
+            <option value="hidden">Tidak tampil di toko</option>
           </select>
 
           <select
