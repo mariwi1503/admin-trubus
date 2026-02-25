@@ -7,8 +7,8 @@ import { Code2, Construction, MessageCircle } from 'lucide-react';
 const Index: React.FC = () => {
   return (
     <AppProvider>
-      <AppLayout />
-      {/* <MaintenancePage /> */}
+      {/* <AppLayout /> */}
+      <MaintenancePage />
     </AppProvider>
   );
 };
