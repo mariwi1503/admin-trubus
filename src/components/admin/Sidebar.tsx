@@ -14,7 +14,8 @@ import {
   Leaf,
   Archive,
   Briefcase,
-  QrCode
+  QrCode,
+  Store
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -23,25 +24,28 @@ interface SidebarProps {
   isCollapsed: boolean;
   setIsCollapsed: (collapsed: boolean) => void;
   onLogout: () => void;
+  userRole?: 'super_admin' | 'store_admin' | 'customer' | 'admin';
 }
 
 interface MenuItem {
   id: string;
   label: string;
   icon: React.ElementType;
+  roles?: string[]; // Allowed roles
 }
 
 const menuItems: MenuItem[] = [
   { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
-  { id: 'users', label: 'Pengguna', icon: Users },
-  { id: 'experts', label: 'Ahli Pertanian', icon: UserCog },
-  { id: 'articles', label: 'Artikel', icon: FileText },
+  { id: 'stores', label: 'Kelola Toko', icon: Store, roles: ['super_admin'] },
+  { id: 'users', label: 'Pengguna', icon: Users, roles: ['super_admin'] },
+  { id: 'experts', label: 'Ahli Pertanian', icon: UserCog, roles: ['super_admin'] },
+  { id: 'articles', label: 'Artikel', icon: FileText, roles: ['super_admin'] },
   { id: 'products', label: 'Produk', icon: Package },
   { id: 'orders', label: 'Pesanan', icon: ShoppingCart },
   { id: 'qrcode', label: 'QR Code', icon: QrCode },
-  { id: 'arsip', label: 'Arsip', icon: Archive },
-  { id: 'clients', label: 'Klien', icon: Briefcase },
-  { id: 'settings', label: 'Pengaturan', icon: Settings },
+  { id: 'arsip', label: 'Arsip', icon: Archive, roles: ['super_admin'] },
+  { id: 'clients', label: 'Klien', icon: Briefcase, roles: ['super_admin'] },
+  { id: 'settings', label: 'Pengaturan', icon: Settings, roles: ['super_admin'] },
 ];
 
 const Sidebar: React.FC<SidebarProps> = ({
@@ -49,8 +53,17 @@ const Sidebar: React.FC<SidebarProps> = ({
   setCurrentPage,
   isCollapsed,
   setIsCollapsed,
-  onLogout
+  onLogout,
+  userRole
 }) => {
+  // Filter menu items based on user role
+  const filteredMenuItems = menuItems.filter(item => {
+    if (!item.roles) return true; // Available for all if roles not specified
+    if (!userRole) return false;
+    // Map 'admin' to 'super_admin' for backward compatibility if needed, or stick to strict checking
+    return item.roles.includes(userRole);
+  });
+
   return (
     <aside
       className={`fixed left-0 top-0 h-full bg-gradient-to-b from-green-800 to-green-900 text-white transition-all duration-300 z-50 ${isCollapsed ? 'w-20' : 'w-64'
@@ -59,13 +72,13 @@ const Sidebar: React.FC<SidebarProps> = ({
       {/* Logo */}
       <div className="flex items-center justify-between p-4 border-b border-green-700">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-white rounded-lg flex items-center justify-center">
-            <Leaf className="w-6 h-6 text-green-600" />
-          </div>
-          {!isCollapsed && (
-            <div>
-              <h1 className="font-bold text-lg">Trubus</h1>
-              <p className="text-xs text-green-300">Admin Panel</p>
+          {isCollapsed ? (
+            <div className="w-10 h-10 bg-white rounded-lg flex items-center justify-center shrink-0">
+              <Leaf className="w-6 h-6 text-green-600" />
+            </div>
+          ) : (
+            <div className="pl-4 w-full flex items-center justify-center">
+              <img src="/images/logo-white.png" alt="Trubus" className="h-10 object-contain" />
             </div>
           )}
         </div>
@@ -79,7 +92,7 @@ const Sidebar: React.FC<SidebarProps> = ({
 
       {/* Navigation */}
       <nav className="p-4 space-y-2 overflow-y-auto max-h-[calc(100vh-160px)] custom-scrollbar">
-        {menuItems.map((item) => {
+        {filteredMenuItems.map((item) => {
           const Icon = item.icon;
           const isActive = currentPage === item.id;
 

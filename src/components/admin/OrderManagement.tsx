@@ -1,44 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { Search, Eye, Download, Package, Truck, CheckCircle, XCircle, Clock, Loader2, RefreshCw, Cloud, CloudOff } from 'lucide-react';
-import { Order } from '@/data/adminData';
+import {
+  Clock, Package, Truck, CheckCircle, XCircle,
+  Cloud, CloudOff, Search, RefreshCw, Download,
+  Loader2, Eye, Filter
+} from 'lucide-react';
+import { useAppContext } from '@/contexts/AppContext';
+import { Order, dummyStores, dummyOrders } from '@/data/adminData';
 import { ordersService } from '@/lib/supabaseService';
 import Modal from './Modal';
-
-// --- DATA DUMMY (30 ITEMS) ---
-const DUMMY_ORDERS: Order[] = Array.from({ length: 15 }).map((_, i) => {
-  const id = (i + 1).toString();
-  const statuses: Order['status'][] = ['pending', 'processing', 'shipped', 'delivered', 'cancelled'];
-  const paymentStatuses: Order['paymentStatus'][] = ['paid', 'unpaid', 'refunded'];
-  const paymentMethods = ['Transfer BCA', 'GoPay', 'OVO', 'ShopeePay', 'Mandiri Virtual Account'];
-  const customers = [
-    { name: 'Budi Santoso', email: 'budi.s@example.com' },
-    { name: 'Siti Aminah', email: 'siti.a@test.com' },
-    { name: 'Andi Wijaya', email: 'andi.w@mail.com' },
-    { name: 'Rina Permata', email: 'rina.p@provider.com' },
-    { name: 'Joko Susilo', email: 'joko.s@web.id' }
-  ];
-
-  const customer = customers[i % customers.length];
-  const status = statuses[i % statuses.length];
-  const paymentStatus = i % 7 === 0 ? 'unpaid' : (i % 10 === 0 ? 'refunded' : 'paid');
-
-  return {
-    id,
-    orderNumber: `ORD-2024-${id.padStart(3, '0')}`,
-    customerName: customer.name,
-    customerEmail: customer.email,
-    orderDate: `2024-01-${((i % 28) + 1).toString().padStart(2, '0')} 14:20`,
-    total: (i + 1) * 75000,
-    status,
-    paymentStatus: paymentStatus as Order['paymentStatus'],
-    paymentMethod: paymentMethods[i % paymentMethods.length],
-    shippingAddress: `Jl. Melati No. ${id}, Kec. Serpong, Tangerang Selatan`,
-    items: [
-      { name: 'Kopi Arabika Gayo', qty: Math.floor(Math.random() * 3) + 1, price: 45000 },
-      { name: 'Filter Paper V60', qty: 1, price: 30000 }
-    ]
-  };
-});
 
 const formatCurrency = (value: number) => {
   return new Intl.NumberFormat('id-ID', {
@@ -49,11 +18,13 @@ const formatCurrency = (value: number) => {
 };
 
 const OrderManagement: React.FC = () => {
+  const { user } = useAppContext();
   // Inisialisasi dengan data dummy agar UI langsung terisi
-  const [orders, setOrders] = useState<Order[]>(DUMMY_ORDERS);
+  const [orders, setOrders] = useState<Order[]>(dummyOrders);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState<string>('all');
   const [filterPayment, setFilterPayment] = useState<string>('all');
+  const [selectedStore, setSelectedStore] = useState<string>('all');
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -63,9 +34,7 @@ const OrderManagement: React.FC = () => {
     loadOrders();
 
     const subscription = ordersService.subscribe((updatedOrders) => {
-      if (updatedOrders && updatedOrders.length > 0) {
-        setOrders(updatedOrders);
-      }
+      setOrders(updatedOrders);
       setIsConnected(true);
     });
 
@@ -78,24 +47,28 @@ const OrderManagement: React.FC = () => {
     setIsLoading(true);
     try {
       const data = await ordersService.getAll();
-      if (data && data.length > 0) {
-        setOrders(data);
-      } else {
-        // Jika data di database kosong, tetap gunakan dummy
-        setOrders(DUMMY_ORDERS);
-      }
+      setOrders(data);
       setIsConnected(true);
     } catch (error) {
       console.error('Error loading orders:', error);
       setIsConnected(false);
-      // Fallback ke dummy jika koneksi gagal
-      setOrders(DUMMY_ORDERS);
     } finally {
       setIsLoading(false);
     }
   };
 
+
   const filteredOrders = orders.filter(order => {
+    // RBAC Filter: If store_admin, only show orders from their store
+    if (user?.role === 'store_admin' && user.storeId && order.storeId !== user.storeId) {
+      return false;
+    }
+
+    // Store Filter (Super Admin)
+    if (user?.role !== 'store_admin' && selectedStore !== 'all' && order.storeId !== selectedStore) {
+      return false;
+    }
+
     const matchesSearch = order.orderNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
       order.customerName.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesStatus = filterStatus === 'all' || order.status === filterStatus;
@@ -246,6 +219,20 @@ const OrderManagement: React.FC = () => {
               className="pl-10 pr-4 py-2.5 border border-gray-200 rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-green-500 transition-all"
             />
           </div>
+
+          {/* Store Filter (Only for Super Admin) */}
+          {user?.role !== 'store_admin' && (
+            <select
+              value={selectedStore}
+              onChange={(e) => setSelectedStore(e.target.value)}
+              className="px-4 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 bg-white"
+            >
+              <option value="all">Semua Toko</option>
+              {dummyStores.map(store => (
+                <option key={store.id} value={store.id}>{store.name}</option>
+              ))}
+            </select>
+          )}
 
           <select
             value={filterStatus}

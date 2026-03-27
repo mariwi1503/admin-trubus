@@ -1,9 +1,10 @@
 import { supabase } from './supabase';
-import { 
-  User, Expert, Article, Product, Order, PaymentMethod, SystemSettings,
-  dummyUsers, dummyExperts, dummyArticles, dummyProducts, dummyOrders, 
-  dummyPaymentMethods, defaultSystemSettings 
+import {
+  User, Expert, Article, Product, Order, PaymentMethod, SystemSettings, Store,
+  dummyUsers, dummyExperts, dummyArticles, dummyProducts, dummyOrders, dummyStores,
+  dummyPaymentMethods, defaultSystemSettings
 } from '@/data/adminData';
+
 
 // Type definitions for database rows
 interface DbUser {
@@ -11,12 +12,22 @@ interface DbUser {
   name: string;
   email: string;
   phone: string;
-  role: 'customer' | 'admin';
+  role: 'customer' | 'super_admin' | 'store_admin';
+
   status: 'active' | 'inactive' | 'banned';
   join_date: string;
   total_orders: number;
   total_spent: number;
   avatar: string;
+}
+
+interface DbStore {
+  id: string;
+  name: string;
+  location: string;
+  manager_name: string;
+  contact_phone: string;
+  status: 'active' | 'inactive';
 }
 
 interface DbExpert {
@@ -71,6 +82,7 @@ interface DbOrder {
   payment_status: 'paid' | 'unpaid' | 'refunded';
   order_date: string;
   shipping_address: string;
+  store_id: string;
 }
 
 interface DbPaymentMethod {
@@ -119,6 +131,23 @@ const userToDb = (user: Partial<User>): Partial<DbUser> => ({
   total_orders: user.totalOrders,
   total_spent: user.totalSpent,
   avatar: user.avatar,
+});
+
+const dbToStore = (db: DbStore): Store => ({
+  id: db.id,
+  name: db.name,
+  location: db.location,
+  managerName: db.manager_name,
+  contactPhone: db.contact_phone,
+  status: db.status,
+});
+
+const storeToDb = (store: Partial<Store>): Partial<DbStore> => ({
+  name: store.name,
+  location: store.location,
+  manager_name: store.managerName,
+  contact_phone: store.contactPhone,
+  status: store.status,
 });
 
 const dbToExpert = (db: DbExpert): Expert => ({
@@ -210,6 +239,7 @@ const dbToOrder = (db: DbOrder): Order => ({
   paymentStatus: db.payment_status,
   orderDate: db.order_date,
   shippingAddress: db.shipping_address,
+  storeId: db.store_id,
 });
 
 const orderToDb = (order: Partial<Order>): Partial<DbOrder> => ({
@@ -223,6 +253,7 @@ const orderToDb = (order: Partial<Order>): Partial<DbOrder> => ({
   payment_status: order.paymentStatus,
   order_date: order.orderDate,
   shipping_address: order.shippingAddress,
+  store_id: order.storeId,
 });
 
 const dbToPaymentMethod = (db: DbPaymentMethod): PaymentMethod => ({
@@ -266,6 +297,70 @@ const settingsToDb = (settings: Partial<SystemSettings>): Partial<DbSettings> =>
   free_shipping_threshold: settings.freeShippingThreshold,
 });
 
+// ==================== STORES ====================
+export const storesService = {
+  async getAll(): Promise<Store[]> {
+    const { data, error } = await supabase
+      .from('admin_stores')
+      .select('*')
+      .order('created_at', { ascending: false });
+
+    if (error) throw error;
+    return (data || []).map(dbToStore);
+  },
+
+  async create(store: Omit<Store, 'id'>): Promise<Store> {
+    const { data, error } = await supabase
+      .from('admin_stores')
+      .insert(storeToDb(store))
+      .select()
+      .single();
+
+    if (error) throw error;
+    return dbToStore(data);
+  },
+
+  async update(id: string, store: Partial<Store>): Promise<Store> {
+    const { data, error } = await supabase
+      .from('admin_stores')
+      .update({ ...storeToDb(store), updated_at: new Date().toISOString() })
+      .eq('id', id)
+      .select()
+      .single();
+
+    if (error) throw error;
+    return dbToStore(data);
+  },
+
+  async delete(id: string): Promise<void> {
+    const { error } = await supabase
+      .from('admin_stores')
+      .delete()
+      .eq('id', id);
+
+    if (error) throw error;
+  },
+
+  subscribe(callback: (stores: Store[]) => void) {
+    return supabase
+      .channel('admin_stores_changes')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'admin_stores' }, async () => {
+        const stores = await this.getAll();
+        callback(stores);
+      })
+      .subscribe();
+  },
+
+  async seedData(): Promise<void> {
+    const { data } = await supabase.from('admin_stores').select('id').limit(1);
+    if (!data || data.length === 0) {
+      for (const store of dummyStores) {
+        await supabase.from('admin_stores').insert(storeToDb(store));
+      }
+    }
+  }
+};
+
 // ==================== USERS ====================
 export const usersService = {
   async getAll(): Promise<User[]> {
@@ -273,7 +368,7 @@ export const usersService = {
       .from('admin_users')
       .select('*')
       .order('created_at', { ascending: false });
-    
+
     if (error) throw error;
     return (data || []).map(dbToUser);
   },
@@ -284,7 +379,7 @@ export const usersService = {
       .insert(userToDb(user))
       .select()
       .single();
-    
+
     if (error) throw error;
     return dbToUser(data);
   },
@@ -296,7 +391,7 @@ export const usersService = {
       .eq('id', id)
       .select()
       .single();
-    
+
     if (error) throw error;
     return dbToUser(data);
   },
@@ -306,7 +401,7 @@ export const usersService = {
       .from('admin_users')
       .delete()
       .eq('id', id);
-    
+
     if (error) throw error;
   },
 
@@ -337,7 +432,7 @@ export const expertsService = {
       .from('admin_experts')
       .select('*')
       .order('created_at', { ascending: false });
-    
+
     if (error) throw error;
     return (data || []).map(dbToExpert);
   },
@@ -348,7 +443,7 @@ export const expertsService = {
       .insert(expertToDb(expert))
       .select()
       .single();
-    
+
     if (error) throw error;
     return dbToExpert(data);
   },
@@ -360,7 +455,7 @@ export const expertsService = {
       .eq('id', id)
       .select()
       .single();
-    
+
     if (error) throw error;
     return dbToExpert(data);
   },
@@ -370,7 +465,7 @@ export const expertsService = {
       .from('admin_experts')
       .delete()
       .eq('id', id);
-    
+
     if (error) throw error;
   },
 
@@ -401,7 +496,7 @@ export const articlesService = {
       .from('admin_articles')
       .select('*')
       .order('created_at', { ascending: false });
-    
+
     if (error) throw error;
     return (data || []).map(dbToArticle);
   },
@@ -412,7 +507,7 @@ export const articlesService = {
       .insert(articleToDb(article))
       .select()
       .single();
-    
+
     if (error) throw error;
     return dbToArticle(data);
   },
@@ -424,7 +519,7 @@ export const articlesService = {
       .eq('id', id)
       .select()
       .single();
-    
+
     if (error) throw error;
     return dbToArticle(data);
   },
@@ -434,7 +529,7 @@ export const articlesService = {
       .from('admin_articles')
       .delete()
       .eq('id', id);
-    
+
     if (error) throw error;
   },
 
@@ -465,7 +560,7 @@ export const productsService = {
       .from('admin_products')
       .select('*')
       .order('created_at', { ascending: false });
-    
+
     if (error) throw error;
     return (data || []).map(dbToProduct);
   },
@@ -476,7 +571,7 @@ export const productsService = {
       .insert(productToDb(product))
       .select()
       .single();
-    
+
     if (error) throw error;
     return dbToProduct(data);
   },
@@ -488,7 +583,7 @@ export const productsService = {
       .eq('id', id)
       .select()
       .single();
-    
+
     if (error) throw error;
     return dbToProduct(data);
   },
@@ -498,7 +593,7 @@ export const productsService = {
       .from('admin_products')
       .delete()
       .eq('id', id);
-    
+
     if (error) throw error;
   },
 
@@ -529,7 +624,7 @@ export const ordersService = {
       .from('admin_orders')
       .select('*')
       .order('created_at', { ascending: false });
-    
+
     if (error) throw error;
     return (data || []).map(dbToOrder);
   },
@@ -540,7 +635,7 @@ export const ordersService = {
       .insert(orderToDb(order))
       .select()
       .single();
-    
+
     if (error) throw error;
     return dbToOrder(data);
   },
@@ -552,7 +647,7 @@ export const ordersService = {
       .eq('id', id)
       .select()
       .single();
-    
+
     if (error) throw error;
     return dbToOrder(data);
   },
@@ -562,7 +657,7 @@ export const ordersService = {
       .from('admin_orders')
       .delete()
       .eq('id', id);
-    
+
     if (error) throw error;
   },
 
@@ -593,7 +688,7 @@ export const paymentMethodsService = {
       .from('admin_payment_methods')
       .select('*')
       .order('created_at', { ascending: false });
-    
+
     if (error) throw error;
     return (data || []).map(dbToPaymentMethod);
   },
@@ -604,7 +699,7 @@ export const paymentMethodsService = {
       .insert(paymentMethodToDb(pm))
       .select()
       .single();
-    
+
     if (error) throw error;
     return dbToPaymentMethod(data);
   },
@@ -616,7 +711,7 @@ export const paymentMethodsService = {
       .eq('id', id)
       .select()
       .single();
-    
+
     if (error) throw error;
     return dbToPaymentMethod(data);
   },
@@ -626,7 +721,7 @@ export const paymentMethodsService = {
       .from('admin_payment_methods')
       .delete()
       .eq('id', id);
-    
+
     if (error) throw error;
   },
 
@@ -658,7 +753,7 @@ export const settingsService = {
       .select('*')
       .limit(1)
       .single();
-    
+
     if (error) {
       // Return default if not found
       return defaultSystemSettings;
@@ -681,7 +776,7 @@ export const settingsService = {
         .eq('id', existing.id)
         .select()
         .single();
-      
+
       if (error) throw error;
       return dbToSettings(data);
     } else {
@@ -690,7 +785,7 @@ export const settingsService = {
         .insert(settingsToDb(settings))
         .select()
         .single();
-      
+
       if (error) throw error;
       return dbToSettings(data);
     }
@@ -712,6 +807,7 @@ export const initializeDatabase = async () => {
   try {
     await Promise.all([
       usersService.seedData(),
+      storesService.seedData(),
       expertsService.seedData(),
       articlesService.seedData(),
       productsService.seedData(),

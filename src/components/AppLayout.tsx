@@ -18,50 +18,38 @@ import ArchiveManagement from './admin/ArchiveManagement';
 import ClientManagement from './admin/ClientManagement';
 import QRCodeManagement from './admin/QRCodeManagement';
 
+import StoreManagement from './admin/StoreManagement';
+
+
 const AppLayout: React.FC = () => {
-  const { sidebarOpen, toggleSidebar } = useAppContext();
+  const { sidebarOpen, toggleSidebar, user, login, logout } = useAppContext();
   const isMobile = useIsMobile();
 
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [adminName, setAdminName] = useState('Admin');
   const [currentPage, setCurrentPage] = useState('dashboard');
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [isInitializing, setIsInitializing] = useState(false);
 
-  // Check for existing session
-  useEffect(() => {
-    const session = localStorage.getItem('admin_session');
-    if (session) {
-      const sessionData = JSON.parse(session);
-      setIsLoggedIn(true);
-      setAdminName(sessionData.name || 'Admin');
-      // Initialize database with seed data if needed
-      initializeDatabase();
-    }
-  }, []);
+  // Initial check is handled in AppContext
 
   const handleLogin = async (email: string, password: string) => {
     setIsInitializing(true);
 
-    // Save session
-    const sessionData = {
-      email,
-      name: 'Administrator',
-      loginTime: new Date().toISOString(),
-    };
-    localStorage.setItem('admin_session', JSON.stringify(sessionData));
+    // Allow any password for demo purposes as long as email matches a user in dummyUsers
+    // In a real app, strict password checking would be here
+    const success = login(email);
 
-    // Initialize database with seed data
-    await initializeDatabase();
+    if (success) {
+      // Initialize database with seed data if needed
+      await initializeDatabase();
+    } else {
+      // Error handling is managed in AppContext login function (toast) or LoginPage
+    }
 
-    setIsLoggedIn(true);
-    setAdminName('Administrator');
     setIsInitializing(false);
   };
 
   const handleLogout = () => {
-    localStorage.removeItem('admin_session');
-    setIsLoggedIn(false);
+    logout();
     setCurrentPage('dashboard');
   };
 
@@ -75,6 +63,7 @@ const AppLayout: React.FC = () => {
       'products-all': 'Semua Produk',
       'products-store': 'Produk di Toko',
       orders: 'Kelola Pesanan',
+      stores: 'Kelola Toko', // New title
       settings: 'Pengaturan Sistem',
       arsip: 'Arsip Dokumen',
       clients: 'Kelola Klien',
@@ -97,6 +86,8 @@ const AppLayout: React.FC = () => {
         return <ProductManagement />;
       case 'orders':
         return <OrderManagement />;
+      case 'stores':
+        return <StoreManagement />;
       case 'settings':
         return <SystemSettings />;
       case 'arsip':
@@ -111,7 +102,7 @@ const AppLayout: React.FC = () => {
   };
 
   // Show login page if not logged in
-  if (!isLoggedIn) {
+  if (!user) {
     return <LoginPage onLogin={handleLogin} />;
   }
 
@@ -124,6 +115,7 @@ const AppLayout: React.FC = () => {
         isCollapsed={isSidebarCollapsed}
         setIsCollapsed={setIsSidebarCollapsed}
         onLogout={handleLogout}
+        userRole={user.role}
       />
 
       {/* Main Content */}
@@ -131,7 +123,7 @@ const AppLayout: React.FC = () => {
         {/* Header */}
         <Header
           pageTitle={getPageTitle()}
-          adminName={adminName}
+          adminName={user.name}
           onMenuClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
           onLogout={handleLogout}
         />

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Search, Plus, Edit2, Trash2, Star, Package, Download, AlertTriangle, Loader2, RefreshCw, Cloud, CloudOff } from 'lucide-react';
-import { Product } from '@/data/adminData';
+import { Product, dummyStores } from '@/data/adminData';
 import { productsService } from '@/lib/supabaseService';
 import Modal from './Modal';
 
@@ -18,6 +18,7 @@ export default function ProductManagement() {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState<string>('all');
   const [filterCategory, setFilterCategory] = useState<string>('all');
+  const [filterStore, setFilterStore] = useState<string>('all');
   const [filterDisplay, setFilterDisplay] = useState<string>('all');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
@@ -50,6 +51,7 @@ export default function ProductManagement() {
         sku: p.sku || `TRB-12345-XXXX`,
         uom: p.uom || uoms[Math.floor(Math.random() * uoms.length)],
         isDisplayed: p.isDisplayed !== undefined ? p.isDisplayed : true,
+        storeId: p.storeId || (Math.floor(Math.random() * 3) + 1).toString(), // Inject dummy storeId
       }));
       setProducts(productsWithDummyData);
       setIsConnected(true);
@@ -70,6 +72,7 @@ export default function ProductManagement() {
         sku: p.sku || `TRB-${p.id.padStart(4, '0')}`,
         uom: p.uom || uoms[Math.floor(Math.random() * uoms.length)],
         isDisplayed: p.isDisplayed !== undefined ? p.isDisplayed : true,
+        storeId: p.storeId || (Math.floor(Math.random() * 3) + 1).toString(), // Inject dummy storeId
       }));
       setProducts(productsWithDummyData);
       setIsConnected(true);
@@ -91,7 +94,9 @@ export default function ProductManagement() {
         ? product.isDisplayed === true
         : product.isDisplayed === false;
 
-    return matchesSearch && matchesStatus && matchesCategory && matchesDisplay;
+    const matchesStore = filterStore === 'all' || product.storeId === filterStore;
+
+    return matchesSearch && matchesStatus && matchesCategory && matchesDisplay && matchesStore;
   });
 
   const handleOpenModal = (product?: Product) => {
@@ -244,6 +249,17 @@ export default function ProductManagement() {
               className="pl-10 pr-4 py-2.5 border border-gray-200 rounded-lg w-full sm:w-64 focus:outline-none focus:ring-2 focus:ring-green-500"
             />
           </div>
+
+          <select
+            value={filterStore}
+            onChange={(e) => setFilterStore(e.target.value)}
+            className="px-4 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+          >
+            <option value="all">Semua Toko</option>
+            {dummyStores.map(store => (
+              <option key={store.id} value={store.id}>{store.name}</option>
+            ))}
+          </select>
 
           <select
             value={filterStatus}

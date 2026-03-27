@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { Leaf, Eye, EyeOff, Zap, Lock, Mail } from 'lucide-react';
+import { Leaf, Eye, EyeOff, Zap, Lock, Mail, Shield, Store } from 'lucide-react';
+
 
 interface LoginPageProps {
   onLogin: (email: string, password: string) => void;
@@ -19,7 +20,8 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
 
     // Simulate login
     setTimeout(() => {
-      if (email === 'admin@tokotani.com' && password === 'admin123') {
+      // Basic client-side validation for demo purposes
+      if (password === 'admin123') {
         onLogin(email, password);
       } else {
         setError('Email atau password salah. Gunakan Quick Login untuk demo.');
@@ -28,12 +30,12 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
     }, 800);
   };
 
-  const handleQuickLogin = () => {
-    setEmail('admin@tokotani.com');
+  const handleQuickLogin = (email: string) => {
+    setEmail(email);
     setPassword('admin123');
     setIsLoading(true);
     setTimeout(() => {
-      onLogin('admin@tokotani.com', 'admin123');
+      onLogin(email, 'admin123');
     }, 500);
   };
 
@@ -65,15 +67,26 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
             <p className="text-sm text-gray-500 mt-1">Masuk ke panel admin Anda</p>
           </div>
 
-          {/* Quick Login Button */}
-          <button
-            onClick={handleQuickLogin}
-            disabled={isLoading}
-            className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-gradient-to-r from-amber-500 to-orange-500 text-white rounded-xl font-medium hover:from-amber-600 hover:to-orange-600 transition-all shadow-lg shadow-amber-500/30 mb-6 disabled:opacity-50"
-          >
-            <Zap className="w-5 h-5" />
-            <span>Quick Login (Demo)</span>
-          </button>
+          {/* Quick Login Buttons */}
+          <div className="grid grid-cols-2 gap-3 mb-6">
+            <button
+              onClick={() => handleQuickLogin('super@tokotani.com')}
+              disabled={isLoading}
+              className="flex flex-col items-center justify-center gap-2 p-3 bg-gradient-to-br from-amber-500 to-orange-600 text-white rounded-xl hover:from-amber-600 hover:to-orange-700 transition-all shadow-lg shadow-amber-500/20 disabled:opacity-50"
+            >
+              <Shield className="w-5 h-5" />
+              <span className="text-xs font-bold">Super Admin</span>
+            </button>
+
+            <button
+              onClick={() => handleQuickLogin('bandung@tokotani.com')}
+              disabled={isLoading}
+              className="flex flex-col items-center justify-center gap-2 p-3 bg-gradient-to-br from-blue-500 to-indigo-600 text-white rounded-xl hover:from-blue-600 hover:to-indigo-700 transition-all shadow-lg shadow-blue-500/20 disabled:opacity-50"
+            >
+              <Store className="w-5 h-5" />
+              <span className="text-xs font-bold">Admin Toko</span>
+            </button>
+          </div>
 
           <div className="relative mb-6">
             <div className="absolute inset-0 flex items-center">
@@ -159,10 +172,16 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
           </form>
 
           {/* Demo Credentials */}
-          <div className="mt-6 p-4 bg-gray-50 rounded-xl">
-            <p className="text-xs text-gray-500 text-center mb-2">Demo Credentials:</p>
-            <div className="text-xs text-gray-600 text-center space-y-1">
-              <p><span className="font-medium">Email:</span> admin@tokotani.com</p>
+          <div className="mt-6 p-4 bg-gray-50 rounded-xl space-y-3">
+            <p className="text-xs text-gray-500 text-center mb-1">Demo Credentials:</p>
+            <div className="text-xs text-gray-600 space-y-1">
+              <p className="font-bold border-b pb-1">Super Admin:</p>
+              <p><span className="font-medium">Email:</span> super@tokotani.com</p>
+              <p><span className="font-medium">Password:</span> admin123</p>
+            </div>
+            <div className="text-xs text-gray-600 space-y-1">
+              <p className="font-bold border-b pb-1">Admin Toko:</p>
+              <p><span className="font-medium">Email:</span> bandung@tokotani.com</p>
               <p><span className="font-medium">Password:</span> admin123</p>
             </div>
           </div>
