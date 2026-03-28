@@ -123,9 +123,6 @@ const Dashboard: React.FC = () => {
 
       {/* Header with Store Filter */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <div>
-          {/* Maybe add welcome message here or leave empty if handled by header component */}
-        </div>
         {user?.role !== 'store_admin' ? (
           <div className="flex items-center gap-2 bg-white p-2 rounded-lg shadow-sm border border-gray-100">
             <Store className="w-4 h-4 text-gray-500" />
@@ -229,8 +226,8 @@ const Dashboard: React.FC = () => {
             {statisticsData.recentActivities.map((activity) => (
               <div key={activity.id} className="flex items-start gap-4 p-3 hover:bg-gray-50 rounded-xl transition-colors border border-transparent hover:border-gray-100">
                 <div className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 bg-opacity-10 ${activity.type === 'order' ? 'bg-blue-600 text-blue-600' :
-                    activity.type === 'payment' ? 'bg-green-600 text-green-600' :
-                      'bg-purple-600 text-purple-600'
+                  activity.type === 'payment' ? 'bg-green-600 text-green-600' :
+                    'bg-purple-600 text-purple-600'
                   }`}>
                   <div className="bg-white p-1 rounded-full shadow-sm">
                     {activity.type === 'order' ? <ShoppingCart className="w-4 h-4" /> : <Package className="w-4 h-4" />}

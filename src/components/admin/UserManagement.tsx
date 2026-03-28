@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { Search, Plus, Edit2, Trash2, Ban, CheckCircle, Download, Loader2, RefreshCw, Cloud, CloudOff } from 'lucide-react';
+import { Search, Plus, Edit2, Trash2, Ban, CheckCircle, Download, Loader2, RefreshCw, Cloud, CloudOff, Filter } from 'lucide-react';
 import { User } from '@/data/adminData';
 import { usersService } from '@/lib/supabaseService';
 import Modal from './Modal';
+import UserDetail from './UserDetail';
 
 const formatCurrency = (value: number) => {
   return new Intl.NumberFormat('id-ID', {
@@ -17,19 +18,13 @@ const UserManagement: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterRole, setFilterRole] = useState<string>('all');
   const [filterStatus, setFilterStatus] = useState<string>('all');
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [viewMode, setViewMode] = useState<'list' | 'detail'>('list');
+  const [showFilters, setShowFilters] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [isConnected, setIsConnected] = useState(true);
-  const [formData, setFormData] = useState({
-    name: '',
-    email: '',
-    phone: '',
-    role: 'customer' as 'customer' | 'admin',
-    status: 'active' as 'active' | 'inactive' | 'banned',
-  });
 
   // Load data and setup real-time subscription
   useEffect(() => {
@@ -67,44 +62,32 @@ const UserManagement: React.FC = () => {
     return matchesSearch && matchesRole && matchesStatus;
   });
 
-  const handleOpenModal = (user?: User) => {
-    if (user) {
-      setSelectedUser(user);
-      setFormData({
-        name: user.name,
-        email: user.email,
-        phone: user.phone,
-        role: user.role,
-        status: user.status,
-      });
-    } else {
-      setSelectedUser(null);
-      setFormData({
-        name: '',
-        email: '',
-        phone: '',
-        role: 'customer',
-        status: 'active',
-      });
-    }
-    setIsModalOpen(true);
+  const handleOpenPage = (user?: User) => {
+    setSelectedUser(user || null);
+    setViewMode('detail');
   };
 
-  const handleSave = async () => {
+  const handleSaveUser = async (formData: Partial<User>, isEdit: boolean) => {
     setIsSaving(true);
     try {
-      if (selectedUser) {
+      if (isEdit && selectedUser) {
         await usersService.update(selectedUser.id, formData);
       } else {
         await usersService.create({
           ...formData,
+          name: formData.name || '',
+          email: formData.email || '',
+          phone: formData.phone || '',
+          role: (formData.role as 'customer' | 'super_admin' | 'store_admin') || 'customer',
+          status: (formData.status as 'active' | 'inactive' | 'banned') || 'active',
           joinDate: new Date().toISOString().split('T')[0],
           totalOrders: 0,
           totalSpent: 0,
-          avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(formData.name)}&background=22c55e&color=fff`,
+          avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(formData.name || 'User')}&background=22c55e&color=fff`,
         });
       }
-      setIsModalOpen(false);
+      setViewMode('list');
+      loadUsers(); // refresh data
     } catch (error) {
       console.error('Error saving user:', error);
       alert('Gagal menyimpan data. Silakan coba lagi.');
@@ -156,12 +139,24 @@ const UserManagement: React.FC = () => {
   };
 
   const getRoleBadge = (role: string) => {
-    return role === 'admin' ? (
-      <span className="px-3 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-700">Admin</span>
-    ) : (
-      <span className="px-3 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-700">Customer</span>
-    );
+    if (role === 'super_admin') {
+      return <span className="px-3 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-700">Super Admin</span>;
+    }
+    if (role === 'store_admin') {
+      return <span className="px-3 py-1 rounded-full text-xs font-medium bg-indigo-100 text-indigo-700">Admin Toko</span>;
+    }
+    return <span className="px-3 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-700">Customer</span>;
   };
+
+  if (viewMode === 'detail') {
+    return (
+      <UserDetail 
+        user={selectedUser} 
+        onBack={() => setViewMode('list')} 
+        onSave={handleSaveUser} 
+      />
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -182,60 +177,91 @@ const UserManagement: React.FC = () => {
       </div>
 
       {/* Header Actions */}
-      <div className="flex flex-col sm:flex-row gap-4 justify-between">
-        <div className="flex flex-col sm:flex-row gap-4">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-            <input
-              type="text"
-              placeholder="Cari user..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10 pr-4 py-2.5 border border-gray-200 rounded-lg w-full sm:w-64 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
-            />
+      <div className="flex flex-col gap-4">
+        <div className="flex flex-col sm:flex-row gap-4 justify-between">
+          <div className="flex flex-col sm:flex-row gap-2">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+              <input
+                type="text"
+                placeholder="Cari user..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-10 pr-4 py-2.5 border border-gray-200 rounded-lg w-full sm:w-64 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+              />
+            </div>
+            
+            <button 
+              onClick={() => setShowFilters(!showFilters)}
+              className={`flex items-center justify-center gap-2 px-4 py-2.5 border rounded-lg transition-colors h-11 ${
+                [filterRole, filterStatus].filter(f => f !== 'all').length > 0 
+                  ? 'border-green-500 text-green-700 bg-green-50' 
+                  : 'border-gray-200 text-gray-700 hover:bg-gray-50'
+              }`}
+            >
+              <Filter className="w-5 h-5" />
+              <span className="hidden sm:inline">Filter</span>
+              {[filterRole, filterStatus].filter(f => f !== 'all').length > 0 && (
+                <span className="bg-green-600 text-white text-xs px-2 py-0.5 rounded-full ml-1 font-semibold">
+                  {[filterRole, filterStatus].filter(f => f !== 'all').length}
+                </span>
+              )}
+            </button>
           </div>
 
-          <select
-            value={filterRole}
-            onChange={(e) => setFilterRole(e.target.value)}
-            className="px-4 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
-          >
-            <option value="all">Semua Role</option>
-            <option value="customer">Customer</option>
-            <option value="admin">Admin</option>
-          </select>
-
-          <select
-            value={filterStatus}
-            onChange={(e) => setFilterStatus(e.target.value)}
-            className="px-4 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
-          >
-            <option value="all">Semua Status</option>
-            <option value="active">Aktif</option>
-            <option value="inactive">Tidak Aktif</option>
-            <option value="banned">Diblokir</option>
-          </select>
+          <div className="flex gap-2">
+            <button
+              onClick={loadUsers}
+              className="flex items-center gap-2 px-4 py-2.5 border border-gray-200 rounded-lg h-11 hover:bg-gray-50 transition-colors"
+            >
+              <RefreshCw className={`w-5 h-5 ${isLoading ? 'animate-spin' : ''}`} />
+            </button>
+            <button className="flex items-center gap-2 px-4 py-2.5 border border-gray-200 rounded-lg h-11 hover:bg-gray-50 transition-colors hidden sm:flex">
+              <Download className="w-5 h-5" />
+              <span>Export</span>
+            </button>
+            <button
+              onClick={() => handleOpenPage()}
+              className="flex items-center gap-2 px-4 py-2.5 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors h-11"
+            >
+              <Plus className="w-5 h-5" />
+              <span className="hidden sm:inline">Tambah</span>
+            </button>
+          </div>
         </div>
 
-        <div className="flex gap-2">
-          <button
-            onClick={loadUsers}
-            className="flex items-center gap-2 px-4 py-2.5 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
-          >
-            <RefreshCw className={`w-5 h-5 ${isLoading ? 'animate-spin' : ''}`} />
-          </button>
-          <button className="flex items-center gap-2 px-4 py-2.5 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
-            <Download className="w-5 h-5" />
-            <span className="hidden sm:inline">Export</span>
-          </button>
-          <button
-            onClick={() => handleOpenModal()}
-            className="flex items-center gap-2 px-4 py-2.5 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
-          >
-            <Plus className="w-5 h-5" />
-            <span>Tambah User</span>
-          </button>
-        </div>
+        {/* Filter Drawer */}
+        {showFilters && (
+          <div className="p-4 bg-white border border-gray-100 shadow-sm rounded-xl grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 animate-in fade-in slide-in-from-top-2">
+            <div>
+              <label className="block text-xs font-semibold text-gray-500 mb-1.5 uppercase tracking-wider">Role</label>
+              <select
+                value={filterRole}
+                onChange={(e) => setFilterRole(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 text-sm bg-gray-50"
+              >
+                <option value="all">Semua Role</option>
+                <option value="customer">Customer</option>
+                <option value="store_admin">Admin Toko</option>
+                <option value="super_admin">Super Admin</option>
+              </select>
+            </div>
+            
+            <div>
+              <label className="block text-xs font-semibold text-gray-500 mb-1.5 uppercase tracking-wider">Status User</label>
+              <select
+                value={filterStatus}
+                onChange={(e) => setFilterStatus(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 text-sm bg-gray-50"
+              >
+                <option value="all">Semua Status</option>
+                <option value="active">Aktif</option>
+                <option value="inactive">Tidak Aktif</option>
+                <option value="banned">Diblokir</option>
+              </select>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Table */}
@@ -264,7 +290,7 @@ const UserManagement: React.FC = () => {
                   <tr
                     key={user.id}
                     className="hover:bg-gray-50 transition-colors cursor-pointer"
-                    onClick={() => handleOpenModal(user)}
+                    onClick={() => handleOpenPage(user)}
                   >
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-3">
@@ -290,7 +316,7 @@ const UserManagement: React.FC = () => {
                     <td className="px-6 py-4">
                       <div className="flex items-center justify-center gap-2" onClick={(e) => e.stopPropagation()}>
                         <button
-                          onClick={() => handleOpenModal(user)}
+                          onClick={() => handleOpenPage(user)}
                           className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
                           title="Edit"
                         >
@@ -338,88 +364,6 @@ const UserManagement: React.FC = () => {
           </div>
         )}
       </div>
-
-      {/* Add/Edit Modal */}
-      <Modal
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        title={selectedUser ? 'Edit User' : 'Tambah User Baru'}
-      >
-        <div className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Nama Lengkap</label>
-            <input
-              type="text"
-              value={formData.name}
-              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-              className="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
-              placeholder="Masukkan nama lengkap"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
-            <input
-              type="email"
-              value={formData.email}
-              onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-              className="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
-              placeholder="Masukkan email"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">No. Telepon</label>
-            <input
-              type="tel"
-              value={formData.phone}
-              onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-              className="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
-              placeholder="Masukkan nomor telepon"
-            />
-          </div>
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Role</label>
-              <select
-                value={formData.role}
-                onChange={(e) => setFormData({ ...formData, role: e.target.value as 'customer' | 'admin' })}
-                className="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
-              >
-                <option value="customer">Customer</option>
-                <option value="admin">Admin</option>
-              </select>
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
-              <select
-                value={formData.status}
-                onChange={(e) => setFormData({ ...formData, status: e.target.value as 'active' | 'inactive' | 'banned' })}
-                className="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
-              >
-                <option value="active">Aktif</option>
-                <option value="inactive">Tidak Aktif</option>
-                <option value="banned">Diblokir</option>
-              </select>
-            </div>
-          </div>
-          <div className="flex gap-3 pt-4">
-            <button
-              onClick={() => setIsModalOpen(false)}
-              className="flex-1 px-4 py-2.5 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
-              disabled={isSaving}
-            >
-              Batal
-            </button>
-            <button
-              onClick={handleSave}
-              disabled={isSaving}
-              className="flex-1 px-4 py-2.5 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
-            >
-              {isSaving && <Loader2 className="w-4 h-4 animate-spin" />}
-              {selectedUser ? 'Simpan Perubahan' : 'Tambah User'}
-            </button>
-          </div>
-        </div>
-      </Modal>
 
       {/* Delete Confirmation Modal */}
       <Modal

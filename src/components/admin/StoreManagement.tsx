@@ -8,6 +8,7 @@ import {
 import { toast } from '@/components/ui/use-toast';
 import Modal from './Modal';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import StoreDetail from './StoreDetail';
 
 const StoreManagement: React.FC = () => {
     // Initialize with dummyStores for simulation
@@ -16,47 +17,19 @@ const StoreManagement: React.FC = () => {
     const [currentPage, setCurrentPage] = useState(1);
     const itemsPerPage = 10;
 
-    // Modal State
-    const [showAddModal, setShowAddModal] = useState(false);
-    const [isEditMode, setIsEditMode] = useState(false);
+    // View State
+    const [viewMode, setViewMode] = useState<'list' | 'detail'>('list');
     const [selectedStore, setSelectedStore] = useState<Store | null>(null);
     const [showDeleteModal, setShowDeleteModal] = useState(false);
 
-    // Form State
-    const [formData, setFormData] = useState<Partial<Store>>({
-        name: '',
-        location: '',
-        managerName: '',
-        contactPhone: '',
-        status: 'active',
-        mapUrl: ''
-    });
-
-    const handleOpenAddModal = () => {
-        setIsEditMode(false);
-        setFormData({
-            name: '',
-            location: '',
-            managerName: '',
-            contactPhone: '',
-            status: 'active',
-            mapUrl: ''
-        });
-        setShowAddModal(true);
+    const handleOpenAddPage = () => {
+        setSelectedStore(null);
+        setViewMode('detail');
     };
 
-    const handleOpenEditModal = (store: Store) => {
-        setIsEditMode(true);
+    const handleOpenEditPage = (store: Store) => {
         setSelectedStore(store);
-        setFormData({
-            name: store.name,
-            location: store.location,
-            managerName: store.managerName,
-            contactPhone: store.contactPhone,
-            status: store.status,
-            mapUrl: store.mapUrl || ''
-        });
-        setShowAddModal(true);
+        setViewMode('detail');
     };
 
     const handleOpenDeleteModal = (store: Store) => {
@@ -64,10 +37,8 @@ const StoreManagement: React.FC = () => {
         setShowDeleteModal(true);
     };
 
-    const handleSubmit = (e: React.FormEvent) => {
-        e.preventDefault();
-
-        if (isEditMode && selectedStore) {
+    const handleSaveStore = (formData: Partial<Store>, isEdit: boolean) => {
+        if (isEdit && selectedStore) {
             // Simulate Update
             const updatedStores = stores.map(store =>
                 store.id === selectedStore.id
@@ -91,7 +62,7 @@ const StoreManagement: React.FC = () => {
                 description: `${formData.name} telah berhasil ditambahkan (Simulasi).`,
             });
         }
-        setShowAddModal(false);
+        setViewMode('list');
     };
 
     const handleDelete = () => {
@@ -117,7 +88,19 @@ const StoreManagement: React.FC = () => {
     const paginatedStores = filteredStores.slice(
         (currentPage - 1) * itemsPerPage,
         currentPage * itemsPerPage
-    );    return (
+    );
+
+    if (viewMode === 'detail') {
+        return (
+            <StoreDetail 
+                store={selectedStore} 
+                onSave={handleSaveStore} 
+                onBack={() => setViewMode('list')} 
+            />
+        );
+    }
+
+    return (
         <div className="space-y-6">
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                 <div>
@@ -125,7 +108,7 @@ const StoreManagement: React.FC = () => {
                     <p className="text-gray-500">Kelola daftar toko dan cabang (Mode Simulasi)</p>
                 </div>
                 <button
-                    onClick={handleOpenAddModal}
+                    onClick={handleOpenAddPage}
                     className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
                 >
                     <Plus className="w-4 h-4" />
@@ -212,7 +195,7 @@ const StoreManagement: React.FC = () => {
                                 <TableCell className="text-right">
                                     <div className="flex items-center justify-end gap-2">
                                         <button 
-                                            onClick={() => handleOpenEditModal(store)}
+                                            onClick={() => handleOpenEditPage(store)}
                                             className="p-1.5 text-gray-500 hover:text-green-600 hover:bg-green-50 rounded bg-gray-50 border border-gray-100/50 transition-colors"
                                             title="Edit"
                                         >
@@ -283,122 +266,6 @@ const StoreManagement: React.FC = () => {
                     </div>
                 )}
             </div>
-
-            {/* Add/Edit Store Modal */}
-            <Modal
-                isOpen={showAddModal}
-                onClose={() => setShowAddModal(false)}
-                title={isEditMode ? "Edit Toko" : "Tambah Toko Baru"}
-            >
-                <form onSubmit={handleSubmit} className="space-y-4">
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Nama Toko</label>
-                        <input
-                            type="text"
-                            required
-                            value={formData.name}
-                            onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                            className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
-                            placeholder="Contoh: Toko Trubus Pusat"
-                        />
-                    </div>
-
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Lokasi</label>
-                        <input
-                            type="text"
-                            required
-                            value={formData.location}
-                            onChange={(e) => setFormData({ ...formData, location: e.target.value })}
-                            className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
-                            placeholder="Contoh: Jakarta Selatan"
-                        />
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-4">
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">Manager</label>
-                            <input
-                                type="text"
-                                required
-                                value={formData.managerName}
-                                onChange={(e) => setFormData({ ...formData, managerName: e.target.value })}
-                                className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
-                                placeholder="Nama Manager"
-                            />
-                        </div>
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">Telepon</label>
-                            <input
-                                type="text"
-                                required
-                                value={formData.contactPhone}
-                                onChange={(e) => setFormData({ ...formData, contactPhone: e.target.value })}
-                                className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
-                                placeholder="021-xxxxxxx"
-                            />
-                        </div>
-                    </div>
-
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">Peta Lokasi</label>
-                        {(formData.name || formData.location || formData.mapUrl) ? (
-                            <div className="w-full h-48 bg-gray-100 rounded-lg overflow-hidden border border-gray-200 mb-3">
-                                <iframe
-                                    width="100%"
-                                    height="100%"
-                                    style={{ border: 0 }}
-                                    loading="lazy"
-                                    allowFullScreen
-                                    referrerPolicy="no-referrer-when-downgrade"
-                                    src={`https://maps.google.com/maps?q=${encodeURIComponent(formData.mapUrl || (formData.name + ' ' + formData.location))}&t=&z=15&ie=UTF8&iwloc=&output=embed`}
-                                ></iframe>
-                            </div>
-                        ) : (
-                            <div className="w-full h-48 bg-gray-50 rounded-lg border border-dashed border-gray-300 mb-3 flex items-center justify-center text-gray-400 text-sm">
-                                Isi Nama dan Lokasi toko untuk melihat pratinjau peta
-                            </div>
-                        )}
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Link Pencarian Peta Manual (Opsional)</label>
-                        <input
-                            type="text"
-                            value={formData.mapUrl || ''}
-                            onChange={(e) => setFormData({ ...formData, mapUrl: e.target.value })}
-                            className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
-                            placeholder="Contoh: https://maps.google.com/..."
-                        />
-                        <p className="text-xs text-gray-500 mt-1">Isi jika lokasi titik koordinat otomatis kurang akurat. Jika tidak, kosongkan saja.</p>
-                    </div>
-
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
-                        <select
-                            value={formData.status}
-                            onChange={(e) => setFormData({ ...formData, status: e.target.value as 'active' | 'inactive' })}
-                            className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
-                        >
-                            <option value="active">Aktif</option>
-                            <option value="inactive">Tidak Aktif</option>
-                        </select>
-                    </div>
-
-                    <div className="pt-4 flex gap-3">
-                        <button
-                            type="button"
-                            onClick={() => setShowAddModal(false)}
-                            className="flex-1 px-4 py-2 border border-gray-200 text-gray-600 rounded-lg hover:bg-gray-50 font-medium"
-                        >
-                            Batal
-                        </button>
-                        <button
-                            type="submit"
-                            className="flex-1 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 font-medium flex justify-center items-center gap-2"
-                        >
-                            {isEditMode ? 'Simpan Perubahan' : 'Simpan Toko'}
-                        </button>
-                    </div>
-                </form>
-            </Modal>
 
             {/* Delete Confirmation Modal */}
             <Modal

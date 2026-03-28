@@ -11,6 +11,11 @@ export interface User {
   totalOrders: number;
   totalSpent: number;
   avatar: string;
+  province?: string;
+  city?: string;
+  district?: string;
+  subdistrict?: string;
+  address?: string;
 }
 
 export interface Store {
@@ -65,6 +70,8 @@ export interface Product {
   uom?: string;
   isDisplayed?: boolean;
   storeId?: string; // Added storeId
+  activePromoId?: string; // referensi ke promo aktif
+  discountedPrice?: number; // harga setelah diskon
 }
 
 export interface Order {
@@ -80,6 +87,9 @@ export interface Order {
   orderDate: string;
   shippingAddress: string;
   storeId: string; // Added storeId
+  promoId?: string; // promo yang digunakan
+  discountAmount?: number; // total potongan harga
+  originalTotal?: number; // total sebelum diskon
 }
 
 export interface PaymentMethod {
@@ -101,6 +111,49 @@ export interface SystemSettings {
   commissionRate: number;
   minOrderAmount: number;
   freeShippingThreshold: number;
+}
+
+export interface Promo {
+  id: string;
+  name: string;
+  description: string;
+  type: 'flash_sale' | 'promo';
+  discountType: 'percentage' | 'fixed';
+  discountValue: number;
+  maxDiscountAmount?: number;
+  minOrderAmount?: number;
+  startDate: string;
+  endDate: string;
+  status: 'active' | 'scheduled' | 'ended' | 'draft';
+  applicableProducts: string[] | 'all';
+  storeId?: string;
+  usageLimit?: number;
+  usageCount: number;
+  banner?: string;
+}
+
+// Helper: hitung harga setelah diskon
+export function calculateDiscountedPrice(price: number, promo: Promo): number {
+  if (promo.discountType === 'percentage') {
+    const discount = price * (promo.discountValue / 100);
+    const cappedDiscount = promo.maxDiscountAmount ? Math.min(discount, promo.maxDiscountAmount) : discount;
+    return Math.max(0, price - cappedDiscount);
+  }
+  return Math.max(0, price - promo.discountValue);
+}
+
+// Helper: cek apakah promo sedang aktif sekarang
+export function isPromoCurrentlyActive(promo: Promo): boolean {
+  const now = new Date();
+  return promo.status === 'active' && new Date(promo.startDate) <= now && new Date(promo.endDate) >= now;
+}
+
+// Helper: dapatkan promo aktif untuk sebuah produk
+export function getActivePromoForProduct(productId: string, promos: Promo[]): Promo | undefined {
+  return promos.find(p =>
+    isPromoCurrentlyActive(p) &&
+    (p.applicableProducts === 'all' || (p.applicableProducts as string[]).includes(productId))
+  );
 }
 
 // Dummy Data
@@ -223,6 +276,83 @@ export const dummyPaymentMethods: PaymentMethod[] = [
   { id: '6', name: 'OVO', type: 'e_wallet', accountNumber: '081234567890', accountName: 'Toko Tani', isActive: true, logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/e/eb/Logo_ovo_purple.svg/200px-Logo_ovo_purple.svg.png' },
   { id: '7', name: 'DANA', type: 'e_wallet', accountNumber: '081234567890', accountName: 'Toko Tani', isActive: true, logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/7/72/Logo_dana_blue.svg/200px-Logo_dana_blue.svg.png' },
   { id: '8', name: 'COD (Cash on Delivery)', type: 'cod', isActive: true, logo: '' },
+];
+
+export const dummyPromos: Promo[] = [
+  {
+    id: '1',
+    name: 'Flash Sale Hari Tani Nasional',
+    description: 'Diskon spesial 30% untuk benih pilihan dalam rangka Hari Tani Nasional!',
+    type: 'flash_sale',
+    discountType: 'percentage',
+    discountValue: 30,
+    maxDiscountAmount: 50000,
+    minOrderAmount: 100000,
+    startDate: '2026-03-27T10:00:00+07:00',
+    endDate: '2026-03-27T23:59:59+07:00',
+    status: 'active',
+    applicableProducts: ['1', '4', '7', '10', '14', '18'],
+    usageLimit: 100,
+    usageCount: 47,
+    banner: 'https://images.unsplash.com/photo-1416879595882-3373a0480b5b?w=800&h=200&fit=crop',
+  },
+  {
+    id: '2',
+    name: 'Promo Pupuk Musim Tanam',
+    description: 'Hemat Rp 25.000 untuk setiap pembelian pupuk di atas Rp 200.000.',
+    type: 'promo',
+    discountType: 'fixed',
+    discountValue: 25000,
+    minOrderAmount: 200000,
+    startDate: '2026-03-20T00:00:00+07:00',
+    endDate: '2026-04-20T23:59:59+07:00',
+    status: 'active',
+    applicableProducts: ['2', '6', '12', '20'],
+    usageCount: 89,
+  },
+  {
+    id: '3',
+    name: 'Flash Sale Alat Pertanian',
+    description: 'Diskon 25% semua alat pertanian, stok terbatas!',
+    type: 'flash_sale',
+    discountType: 'percentage',
+    discountValue: 25,
+    maxDiscountAmount: 100000,
+    startDate: '2026-04-01T08:00:00+07:00',
+    endDate: '2026-04-01T20:00:00+07:00',
+    status: 'scheduled',
+    applicableProducts: ['3', '5', '8', '15', '19'],
+    usageLimit: 50,
+    usageCount: 0,
+    banner: 'https://images.unsplash.com/photo-1625246333195-78d9c38ad449?w=800&h=200&fit=crop',
+  },
+  {
+    id: '4',
+    name: 'Mega Sale Akhir Bulan',
+    description: 'Diskon 20% untuk semua produk, tidak ada minimum belanja.',
+    type: 'promo',
+    discountType: 'percentage',
+    discountValue: 20,
+    maxDiscountAmount: 150000,
+    startDate: '2026-02-25T00:00:00+07:00',
+    endDate: '2026-02-28T23:59:59+07:00',
+    status: 'ended',
+    applicableProducts: 'all',
+    usageCount: 215,
+  },
+  {
+    id: '5',
+    name: 'Promo Ramadan - Diskon Pestisida',
+    description: 'Hemat 15% untuk produk pestisida organik.',
+    type: 'promo',
+    discountType: 'percentage',
+    discountValue: 15,
+    startDate: '2026-04-10T00:00:00+07:00',
+    endDate: '2026-05-10T23:59:59+07:00',
+    status: 'draft',
+    applicableProducts: ['9', '16'],
+    usageCount: 0,
+  },
 ];
 
 export const defaultSystemSettings: SystemSettings = {

@@ -5,7 +5,7 @@ import {
   Loader2, Eye, Filter
 } from 'lucide-react';
 import { useAppContext } from '@/contexts/AppContext';
-import { Order, dummyStores, dummyOrders } from '@/data/adminData';
+import { Order, dummyStores, dummyOrders, dummyPromos } from '@/data/adminData';
 import { ordersService } from '@/lib/supabaseService';
 import Modal from './Modal';
 
@@ -25,6 +25,7 @@ const OrderManagement: React.FC = () => {
   const [filterStatus, setFilterStatus] = useState<string>('all');
   const [filterPayment, setFilterPayment] = useState<string>('all');
   const [selectedStore, setSelectedStore] = useState<string>('all');
+  const [showFilters, setShowFilters] = useState(false);
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -207,71 +208,103 @@ const OrderManagement: React.FC = () => {
       </div>
 
       {/* Header Actions */}
-      <div className="flex flex-col xl:flex-row gap-4 justify-between bg-white p-4 rounded-xl shadow-sm border border-gray-100">
-        <div className="flex flex-col sm:flex-row gap-4 flex-1">
-          <div className="relative flex-1 max-w-md">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-            <input
-              type="text"
-              placeholder="Cari No. Pesanan atau Nama..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10 pr-4 py-2.5 border border-gray-200 rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-green-500 transition-all"
-            />
+      <div className="flex flex-col gap-4">
+        <div className="flex flex-col sm:flex-row gap-4 justify-between bg-white p-4 rounded-xl shadow-sm border border-gray-100">
+          <div className="flex flex-col sm:flex-row gap-2 flex-1">
+            <div className="relative flex-1 max-w-md">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+              <input
+                type="text"
+                placeholder="Cari No. Pesanan atau Nama..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-10 pr-4 py-2.5 border border-gray-200 rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-green-500 transition-all h-11"
+              />
+            </div>
+
+            <button 
+              onClick={() => setShowFilters(!showFilters)}
+              className={`flex items-center justify-center gap-2 px-4 py-2.5 border rounded-lg transition-colors h-11 ${
+                [user?.role !== 'store_admin' ? selectedStore : 'all', filterStatus, filterPayment].filter(f => f !== 'all').length > 0 
+                  ? 'border-green-500 text-green-700 bg-green-50' 
+                  : 'border-gray-200 text-gray-700 hover:bg-gray-50'
+              }`}
+            >
+              <Filter className="w-5 h-5" />
+              <span className="hidden sm:inline">Filter</span>
+              {[user?.role !== 'store_admin' ? selectedStore : 'all', filterStatus, filterPayment].filter(f => f !== 'all').length > 0 && (
+                <span className="bg-green-600 text-white text-xs px-2 py-0.5 rounded-full ml-1 font-semibold">
+                  {[user?.role !== 'store_admin' ? selectedStore : 'all', filterStatus, filterPayment].filter(f => f !== 'all').length}
+                </span>
+              )}
+            </button>
           </div>
 
-          {/* Store Filter (Only for Super Admin) */}
-          {user?.role !== 'store_admin' && (
-            <select
-              value={selectedStore}
-              onChange={(e) => setSelectedStore(e.target.value)}
-              className="px-4 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 bg-white"
+          <div className="flex gap-2">
+            <button
+              onClick={loadOrders}
+              className="flex items-center gap-2 px-4 py-2.5 border border-gray-200 rounded-lg h-11 hover:bg-gray-50 transition-colors"
+              title="Refresh Data"
             >
-              <option value="all">Semua Toko</option>
-              {dummyStores.map(store => (
-                <option key={store.id} value={store.id}>{store.name}</option>
-              ))}
-            </select>
-          )}
-
-          <select
-            value={filterStatus}
-            onChange={(e) => setFilterStatus(e.target.value)}
-            className="px-4 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 bg-white"
-          >
-            <option value="all">Semua Status</option>
-            <option value="pending">Menunggu</option>
-            <option value="processing">Diproses</option>
-            <option value="shipped">Dikirim</option>
-            <option value="delivered">Selesai</option>
-            <option value="cancelled">Dibatalkan</option>
-          </select>
-
-          <select
-            value={filterPayment}
-            onChange={(e) => setFilterPayment(e.target.value)}
-            className="px-4 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 bg-white"
-          >
-            <option value="all">Semua Pembayaran</option>
-            <option value="paid">Lunas</option>
-            <option value="unpaid">Belum Bayar</option>
-            <option value="refunded">Dikembalikan</option>
-          </select>
+              <RefreshCw className={`w-5 h-5 ${isLoading ? 'animate-spin' : ''}`} />
+            </button>
+            <button className="flex items-center gap-2 px-4 py-2.5 bg-green-600 text-white rounded-lg h-11 hover:bg-green-700 transition-colors">
+              <Download className="w-5 h-5" />
+              <span className="hidden sm:inline">Export</span>
+            </button>
+          </div>
         </div>
 
-        <div className="flex gap-2">
-          <button
-            onClick={loadOrders}
-            className="flex items-center gap-2 px-4 py-2.5 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
-            title="Refresh Data"
-          >
-            <RefreshCw className={`w-5 h-5 ${isLoading ? 'animate-spin' : ''}`} />
-          </button>
-          <button className="flex items-center gap-2 px-4 py-2.5 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors">
-            <Download className="w-5 h-5" />
-            <span>Export CSV</span>
-          </button>
-        </div>
+        {/* Filter Drawer */}
+        {showFilters && (
+          <div className="p-4 bg-white border border-gray-100 shadow-sm rounded-xl grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 animate-in fade-in slide-in-from-top-2">
+            {user?.role !== 'store_admin' && (
+              <div>
+                <label className="block text-xs font-semibold text-gray-500 mb-1.5 uppercase tracking-wider">Toko</label>
+                <select
+                  value={selectedStore}
+                  onChange={(e) => setSelectedStore(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 text-sm bg-gray-50"
+                >
+                  <option value="all">Semua Toko</option>
+                  {dummyStores.map(store => (
+                    <option key={store.id} value={store.id}>{store.name}</option>
+                  ))}
+                </select>
+              </div>
+            )}
+
+            <div>
+              <label className="block text-xs font-semibold text-gray-500 mb-1.5 uppercase tracking-wider">Status Pesanan</label>
+              <select
+                value={filterStatus}
+                onChange={(e) => setFilterStatus(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 text-sm bg-gray-50"
+              >
+                <option value="all">Semua Status</option>
+                <option value="pending">Menunggu</option>
+                <option value="processing">Diproses</option>
+                <option value="shipped">Dikirim</option>
+                <option value="delivered">Selesai</option>
+                <option value="cancelled">Dibatalkan</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold text-gray-500 mb-1.5 uppercase tracking-wider">Status Pembayaran</label>
+              <select
+                value={filterPayment}
+                onChange={(e) => setFilterPayment(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 text-sm bg-gray-50"
+              >
+                <option value="all">Semua Pembayaran</option>
+                <option value="paid">Lunas</option>
+                <option value="unpaid">Belum Bayar</option>
+                <option value="refunded">Dikembalikan</option>
+              </select>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Orders Table */}
@@ -290,6 +323,7 @@ const OrderManagement: React.FC = () => {
                   <th className="text-left px-6 py-4 text-sm font-semibold text-gray-600">Pelanggan</th>
                   <th className="text-left px-6 py-4 text-sm font-semibold text-gray-600">Tanggal</th>
                   <th className="text-left px-6 py-4 text-sm font-semibold text-gray-600">Total</th>
+                  <th className="text-left px-6 py-4 text-sm font-semibold text-gray-600">Diskon</th>
                   <th className="text-left px-6 py-4 text-sm font-semibold text-gray-600">Pembayaran</th>
                   <th className="text-left px-6 py-4 text-sm font-semibold text-gray-600">Status</th>
                   <th className="text-center px-6 py-4 text-sm font-semibold text-gray-600">Aksi</th>
@@ -315,6 +349,26 @@ const OrderManagement: React.FC = () => {
                     </td>
                     <td className="px-6 py-4 text-sm text-gray-600">{order.orderDate}</td>
                     <td className="px-6 py-4 text-sm font-bold text-gray-900">{formatCurrency(order.total)}</td>
+                    <td className="px-6 py-4">
+                      {(() => {
+                        const promo = order.promoId ? dummyPromos.find(p => p.id === order.promoId) : null;
+                        if (promo || order.discountAmount) {
+                          return (
+                            <div className="flex flex-col gap-0.5">
+                              <span className="text-xs font-bold text-red-600">
+                                -{formatCurrency(order.discountAmount || 0)}
+                              </span>
+                              {promo && (
+                                <span className="text-xs text-orange-600">
+                                  {promo.type === 'flash_sale' ? '⚡' : '🏷️'} {promo.name}
+                                </span>
+                              )}
+                            </div>
+                          );
+                        }
+                        return <span className="text-xs text-gray-400">-</span>;
+                      })()}
+                    </td>
                     <td className="px-6 py-4">
                       <div className="flex flex-col items-start gap-1">
                         {getPaymentBadge(order.paymentStatus)}
@@ -393,6 +447,18 @@ const OrderManagement: React.FC = () => {
                   <span className="text-sm text-gray-600">Status:</span>
                   {getPaymentBadge(selectedOrder.paymentStatus)}
                 </div>
+                {selectedOrder.originalTotal && (
+                  <div className="flex justify-between items-center mt-2">
+                    <span className="text-sm text-gray-600">Harga Asal:</span>
+                    <span className="text-sm text-gray-400 line-through">{formatCurrency(selectedOrder.originalTotal)}</span>
+                  </div>
+                )}
+                {selectedOrder.discountAmount && (
+                  <div className="flex justify-between items-center mt-1">
+                    <span className="text-sm text-gray-600">Diskon Promo:</span>
+                    <span className="font-semibold text-red-600">-{formatCurrency(selectedOrder.discountAmount)}</span>
+                  </div>
+                )}
                 <div className="flex justify-between items-center mt-2">
                   <span className="text-sm text-gray-600">Total Tagihan:</span>
                   <span className="font-bold text-green-700">{formatCurrency(selectedOrder.total)}</span>

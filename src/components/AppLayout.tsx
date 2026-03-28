@@ -17,6 +17,7 @@ import SystemSettings from './admin/SystemSettings';
 import ArchiveManagement from './admin/ArchiveManagement';
 import ClientManagement from './admin/ClientManagement';
 import QRCodeManagement from './admin/QRCodeManagement';
+import PromoManagement from './admin/PromoManagement';
 
 import StoreManagement from './admin/StoreManagement';
 
@@ -63,6 +64,7 @@ const AppLayout: React.FC = () => {
       'products-all': 'Semua Produk',
       'products-store': 'Produk di Toko',
       orders: 'Kelola Pesanan',
+      promos: 'Promo & Flash Sale',
       stores: 'Kelola Toko', // New title
       settings: 'Pengaturan Sistem',
       arsip: 'Arsip Dokumen',
@@ -86,6 +88,8 @@ const AppLayout: React.FC = () => {
         return <ProductManagement />;
       case 'orders':
         return <OrderManagement />;
+      case 'promos':
+        return <PromoManagement />;
       case 'stores':
         return <StoreManagement />;
       case 'settings':

@@ -1,8 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { Search, Plus, Edit2, Trash2, Eye, Calendar, Download, Image, Loader2, RefreshCw, Cloud, CloudOff } from 'lucide-react';
+import { Search, Plus, Edit2, Trash2, Eye, Calendar, Download, Image, Loader2, RefreshCw, Cloud, CloudOff, LayoutGrid, List, Filter } from 'lucide-react';
 import { Article } from '@/data/adminData';
 import { articlesService } from '@/lib/supabaseService';
 import Modal from './Modal';
+import Cropper, { Point, Area } from 'react-easy-crop';
+import ReactQuill from 'react-quill';
+import 'react-quill/dist/quill.snow.css';
+import { getCroppedImg } from '@/lib/cropImage';
 
 const ArticleManagement: React.FC = () => {
   const [articles, setArticles] = useState<Article[]>([]);
@@ -16,6 +20,16 @@ const ArticleManagement: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [isConnected, setIsConnected] = useState(true);
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+  const [showFilters, setShowFilters] = useState(false);
+  
+  // Image crop states
+  const [imageSrc, setImageSrc] = useState<string | null>(null);
+  const [crop, setCrop] = useState<Point>({ x: 0, y: 0 });
+  const [zoom, setZoom] = useState(1);
+  const [croppedAreaPixels, setCroppedAreaPixels] = useState<Area | null>(null);
+  const [isCropModalOpen, setIsCropModalOpen] = useState(false);
+
   const [formData, setFormData] = useState({
     title: '',
     category: '',
@@ -61,6 +75,41 @@ const ArticleManagement: React.FC = () => {
     const matchesCategory = filterCategory === 'all' || article.category === filterCategory;
     return matchesSearch && matchesStatus && matchesCategory;
   });
+
+  const onFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files.length > 0) {
+      const file = e.target.files[0];
+      let imageDataUrl = await readFile(file);
+      setImageSrc(imageDataUrl as string);
+      setIsCropModalOpen(true);
+    }
+  };
+
+  const readFile = (file: File) => {
+    return new Promise((resolve) => {
+      const reader = new FileReader();
+      reader.addEventListener('load', () => resolve(reader.result), false);
+      reader.readAsDataURL(file);
+    });
+  };
+
+  const onCropComplete = (croppedArea: Area, croppedAreaPixels: Area) => {
+    setCroppedAreaPixels(croppedAreaPixels);
+  };
+
+  const showCroppedImage = async () => {
+    try {
+      const croppedImage = await getCroppedImg(
+        imageSrc as string,
+        croppedAreaPixels as Area
+      );
+      setFormData({ ...formData, image: croppedImage });
+      setIsCropModalOpen(false);
+    } catch (e) {
+      console.error(e);
+      alert('Gagal memotong gambar.');
+    }
+  };
 
   const handleOpenModal = (article?: Article) => {
     if (article) {
@@ -172,61 +221,107 @@ const ArticleManagement: React.FC = () => {
       </div>
 
       {/* Header Actions */}
-      <div className="flex flex-col sm:flex-row gap-4 justify-between">
-        <div className="flex flex-col sm:flex-row gap-4">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-            <input
-              type="text"
-              placeholder="Cari artikel..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10 pr-4 py-2.5 border border-gray-200 rounded-lg w-full sm:w-64 focus:outline-none focus:ring-2 focus:ring-green-500"
-            />
+      <div className="flex flex-col gap-4">
+        <div className="flex flex-col sm:flex-row gap-4 justify-between">
+          <div className="flex flex-col sm:flex-row gap-2">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+              <input
+                type="text"
+                placeholder="Cari artikel..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-10 pr-4 py-2.5 border border-gray-200 rounded-lg w-full sm:w-64 focus:outline-none focus:ring-2 focus:ring-green-500"
+              />
+            </div>
+            
+            <button 
+              onClick={() => setShowFilters(!showFilters)}
+              className={`flex items-center justify-center gap-2 px-4 py-2.5 border rounded-lg transition-colors h-11 ${
+                [filterStatus, filterCategory].filter(f => f !== 'all').length > 0 
+                  ? 'border-green-500 text-green-700 bg-green-50' 
+                  : 'border-gray-200 text-gray-700 hover:bg-gray-50'
+              }`}
+            >
+              <Filter className="w-5 h-5" />
+              <span className="hidden sm:inline">Filter</span>
+              {[filterStatus, filterCategory].filter(f => f !== 'all').length > 0 && (
+                <span className="bg-green-600 text-white text-xs px-2 py-0.5 rounded-full ml-1 font-semibold">
+                  {[filterStatus, filterCategory].filter(f => f !== 'all').length}
+                </span>
+              )}
+            </button>
           </div>
-          
-          <select
-            value={filterStatus}
-            onChange={(e) => setFilterStatus(e.target.value)}
-            className="px-4 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
-          >
-            <option value="all">Semua Status</option>
-            <option value="published">Dipublikasikan</option>
-            <option value="draft">Draft</option>
-            <option value="archived">Diarsipkan</option>
-          </select>
-          
-          <select
-            value={filterCategory}
-            onChange={(e) => setFilterCategory(e.target.value)}
-            className="px-4 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
-          >
-            <option value="all">Semua Kategori</option>
-            {categories.map(cat => (
-              <option key={cat} value={cat}>{cat}</option>
-            ))}
-          </select>
+
+          <div className="flex gap-2">
+            <div className="flex xl:items-center bg-gray-100 rounded-lg p-1 border border-gray-200 h-11 hidden sm:flex">
+              <button
+                onClick={() => setViewMode('grid')}
+                className={`p-1.5 rounded-md transition-colors ${viewMode === 'grid' ? 'bg-white shadow-sm text-green-600' : 'text-gray-500 hover:text-gray-700'}`}
+                title="Tampilan Grid"
+              >
+                <LayoutGrid className="w-5 h-5" />
+              </button>
+              <button
+                onClick={() => setViewMode('list')}
+                className={`p-1.5 rounded-md transition-colors ${viewMode === 'list' ? 'bg-white shadow-sm text-green-600' : 'text-gray-500 hover:text-gray-700'}`}
+                title="Tampilan List"
+              >
+                <List className="w-5 h-5" />
+              </button>
+            </div>
+            <button 
+              onClick={loadArticles}
+              className="flex items-center gap-2 px-4 py-2.5 border border-gray-200 rounded-lg h-11 hover:bg-gray-50 transition-colors"
+            >
+              <RefreshCw className={`w-5 h-5 ${isLoading ? 'animate-spin' : ''}`} />
+            </button>
+            <button className="flex items-center gap-2 px-4 py-2.5 border border-gray-200 rounded-lg h-11 hover:bg-gray-50 transition-colors hidden sm:flex">
+              <Download className="w-5 h-5" />
+              <span>Export</span>
+            </button>
+            <button 
+              onClick={() => handleOpenModal()}
+              className="flex items-center gap-2 px-4 py-2.5 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors h-11"
+            >
+              <Plus className="w-5 h-5" />
+              <span className="hidden sm:inline">Tambah</span>
+            </button>
+          </div>
         </div>
 
-        <div className="flex gap-2">
-          <button 
-            onClick={loadArticles}
-            className="flex items-center gap-2 px-4 py-2.5 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
-          >
-            <RefreshCw className={`w-5 h-5 ${isLoading ? 'animate-spin' : ''}`} />
-          </button>
-          <button className="flex items-center gap-2 px-4 py-2.5 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
-            <Download className="w-5 h-5" />
-            <span className="hidden sm:inline">Export</span>
-          </button>
-          <button 
-            onClick={() => handleOpenModal()}
-            className="flex items-center gap-2 px-4 py-2.5 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
-          >
-            <Plus className="w-5 h-5" />
-            <span>Tambah Artikel</span>
-          </button>
-        </div>
+        {/* Filter Drawer */}
+        {showFilters && (
+          <div className="p-4 bg-white border border-gray-100 shadow-sm rounded-xl grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 animate-in fade-in slide-in-from-top-2">
+            <div>
+              <label className="block text-xs font-semibold text-gray-500 mb-1.5 uppercase tracking-wider">Status Artikel</label>
+              <select
+                value={filterStatus}
+                onChange={(e) => setFilterStatus(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 text-sm bg-gray-50"
+              >
+                <option value="all">Semua Status</option>
+                <option value="published">Dipublikasikan</option>
+                <option value="draft">Draft</option>
+                <option value="archived">Diarsipkan</option>
+              </select>
+            </div>
+            
+            <div>
+              <label className="block text-xs font-semibold text-gray-500 mb-1.5 uppercase tracking-wider">Kategori</label>
+              <select
+                value={filterCategory}
+                onChange={(e) => setFilterCategory(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 text-sm bg-gray-50"
+              >
+                <option value="all">Semua Kategori</option>
+                {categories.map(cat => (
+                  <option key={cat} value={cat}>{cat}</option>
+                ))}
+              </select>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Articles Grid */}
@@ -236,81 +331,132 @@ const ArticleManagement: React.FC = () => {
           <span className="ml-2 text-gray-500">Memuat data...</span>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredArticles.map((article) => (
-            <div 
-              key={article.id}
-              className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-md transition-shadow"
-            >
-              <div className="relative h-48">
-                <img 
-                  src={article.image} 
-                  alt={article.title}
-                  className="w-full h-full object-cover"
-                />
-                <div className="absolute top-3 left-3">
-                  {getStatusBadge(article.status)}
+        viewMode === 'grid' ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-6">
+            {filteredArticles.map((article) => (
+              <div 
+                key={article.id}
+                className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-md transition-shadow"
+              >
+                <div className="relative h-48">
+                  <img 
+                    src={article.image} 
+                    alt={article.title}
+                    className="w-full h-full object-cover"
+                  />
+                  <div className="absolute top-3 left-3">
+                    {getStatusBadge(article.status)}
+                  </div>
                 </div>
-              </div>
-              
-              <div className="p-5">
-                <span className="text-xs font-medium text-green-600 bg-green-50 px-2 py-1 rounded">
-                  {article.category}
-                </span>
                 
-                <h3 className="font-semibold text-gray-800 mt-3 line-clamp-2">{article.title}</h3>
-                
-                <p className="text-sm text-gray-500 mt-2 line-clamp-2">{article.content}</p>
-                
-                <div className="flex items-center justify-between mt-4 pt-4 border-t border-gray-100">
-                  <div className="text-sm text-gray-500">
-                    <p className="font-medium text-gray-700">{article.author}</p>
-                    <div className="flex items-center gap-3 mt-1">
-                      <span className="flex items-center gap-1">
-                        <Calendar className="w-3 h-3" />
-                        {article.publishDate}
-                      </span>
-                      <span className="flex items-center gap-1">
-                        <Eye className="w-3 h-3" />
-                        {article.views}
-                      </span>
+                <div className="p-5">
+                  <span className="text-xs font-medium text-green-600 bg-green-50 px-2 py-1 rounded">
+                    {article.category}
+                  </span>
+                  
+                  <h3 className="font-semibold text-gray-800 mt-3 line-clamp-2">{article.title}</h3>
+                  
+                  <p className="text-sm text-gray-500 mt-2 line-clamp-2">{article.content}</p>
+                  
+                  <div className="flex items-center justify-between mt-4 pt-4 border-t border-gray-100">
+                    <div className="text-sm text-gray-500">
+                      <p className="font-medium text-gray-700">{article.author}</p>
+                      <div className="flex items-center gap-3 mt-1">
+                        <span className="flex items-center gap-1">
+                          <Calendar className="w-3 h-3" />
+                          {article.publishDate}
+                        </span>
+                        <span className="flex items-center gap-1">
+                          <Eye className="w-3 h-3" />
+                          {article.views}
+                        </span>
+                      </div>
+                    </div>
+                    
+                    <div className="flex gap-1">
+                      <button 
+                        onClick={() => {
+                          setSelectedArticle(article);
+                          setIsPreviewModalOpen(true);
+                        }}
+                        className="p-2 text-gray-600 hover:bg-gray-50 rounded-lg transition-colors"
+                        title="Preview"
+                      >
+                        <Eye className="w-4 h-4" />
+                      </button>
+                      <button 
+                        onClick={() => handleOpenModal(article)}
+                        className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                        title="Edit"
+                      >
+                        <Edit2 className="w-4 h-4" />
+                      </button>
+                      <button 
+                        onClick={() => {
+                          setSelectedArticle(article);
+                          setIsDeleteModalOpen(true);
+                        }}
+                        className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                        title="Hapus"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
                     </div>
                   </div>
-                  
-                  <div className="flex gap-1">
-                    <button 
-                      onClick={() => {
-                        setSelectedArticle(article);
-                        setIsPreviewModalOpen(true);
-                      }}
-                      className="p-2 text-gray-600 hover:bg-gray-50 rounded-lg transition-colors"
-                      title="Preview"
-                    >
-                      <Eye className="w-4 h-4" />
-                    </button>
-                    <button 
-                      onClick={() => handleOpenModal(article)}
-                      className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-                      title="Edit"
-                    >
-                      <Edit2 className="w-4 h-4" />
-                    </button>
-                    <button 
-                      onClick={() => {
-                        setSelectedArticle(article);
-                        setIsDeleteModalOpen(true);
-                      }}
-                      className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                      title="Hapus"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
-                  </div>
                 </div>
               </div>
+            ))}
+          </div>
+        ) : (
+          <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm text-left">
+                <thead className="bg-gray-50 text-gray-500 border-b border-gray-100">
+                  <tr>
+                    <th className="px-6 py-4 font-semibold">Artikel</th>
+                    <th className="px-6 py-4 font-semibold">Kategori</th>
+                    <th className="px-6 py-4 font-semibold">Status</th>
+                    <th className="px-6 py-4 font-semibold">Penulis</th>
+                    <th className="px-6 py-4 font-semibold">Publish</th>
+                    <th className="px-6 py-4 font-semibold text-center">Aksi</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-100">
+                  {filteredArticles.map(article => (
+                    <tr key={article.id} className="hover:bg-gray-50 transition-colors">
+                      <td className="px-6 py-4">
+                        <div className="flex items-center gap-4">
+                          <img src={article.image} alt={article.title} className="w-16 h-12 rounded object-cover" />
+                          <div className="font-semibold text-gray-800 line-clamp-2 max-w-[200px] xl:max-w-xs">{article.title}</div>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4">
+                        <span className="text-xs font-medium text-green-600 bg-green-50 px-2 py-1 rounded">{article.category}</span>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        {getStatusBadge(article.status)}
+                      </td>
+                      <td className="px-6 py-4 text-gray-600 whitespace-nowrap">{article.author}</td>
+                      <td className="px-6 py-4 text-gray-600 whitespace-nowrap">
+                        <div className="flex items-center gap-1">
+                          <Calendar className="w-3 h-3" />
+                          {article.publishDate}
+                        </div>
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="flex justify-center gap-1">
+                          <button onClick={() => { setSelectedArticle(article); setIsPreviewModalOpen(true); }} className="p-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors" title="Preview"><Eye className="w-4 h-4" /></button>
+                          <button onClick={() => handleOpenModal(article)} className="p-2 text-blue-600 hover:bg-blue-100 rounded-lg transition-colors" title="Edit"><Edit2 className="w-4 h-4" /></button>
+                          <button onClick={() => { setSelectedArticle(article); setIsDeleteModalOpen(true); }} className="p-2 text-red-600 hover:bg-red-100 rounded-lg transition-colors" title="Hapus"><Trash2 className="w-4 h-4" /></button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
-          ))}
-        </div>
+          </div>
+        )
       )}
 
       {!isLoading && filteredArticles.length === 0 && (
@@ -365,30 +511,55 @@ const ArticleManagement: React.FC = () => {
           </div>
           
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">URL Gambar</label>
-            <div className="flex gap-2">
-              <input
-                type="text"
-                value={formData.image}
-                onChange={(e) => setFormData({ ...formData, image: e.target.value })}
-                className="flex-1 px-4 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
-                placeholder="https://example.com/image.jpg"
-              />
-              <button className="px-4 py-2.5 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
-                <Image className="w-5 h-5 text-gray-600" />
-              </button>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Banner Artikel (Rekomendasi 16:9)</label>
+            <div className="flex flex-col gap-2">
+              {formData.image && (
+                <div className="relative w-full h-40 rounded-lg overflow-hidden border border-gray-200">
+                  <img src={formData.image} alt="Preview" className="w-full h-full object-cover" />
+                  <button 
+                    onClick={() => setFormData({ ...formData, image: '' })}
+                    className="absolute top-2 right-2 p-1.5 bg-red-500 text-white rounded-md hover:bg-red-600 transition-colors"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                </div>
+              )}
+              {!formData.image && (
+                <div className="relative">
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={onFileChange}
+                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                  />
+                  <div className="w-full px-4 py-8 border-2 border-dashed border-gray-300 rounded-lg flex flex-col items-center justify-center text-gray-500 hover:bg-gray-50 hover:border-green-400 transition-colors">
+                    <Image className="w-8 h-8 mb-2 text-gray-400" />
+                    <span>Klik atau seret gambar ke sini</span>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
           
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Konten</label>
-            <textarea
-              value={formData.content}
-              onChange={(e) => setFormData({ ...formData, content: e.target.value })}
-              rows={6}
-              className="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
-              placeholder="Tulis konten artikel..."
-            />
+            <div className="bg-white rounded-lg border border-gray-200 overflow-hidden pb-12">
+              <ReactQuill 
+                theme="snow" 
+                value={formData.content} 
+                onChange={(val) => setFormData({ ...formData, content: val })} 
+                className="h-64"
+                modules={{
+                  toolbar: [
+                    [{ 'header': [1, 2, 3, false] }],
+                    ['bold', 'italic', 'underline', 'strike'],
+                    [{'list': 'ordered'}, {'list': 'bullet'}],
+                    ['link', 'image'],
+                    ['clean']
+                  ]
+                }}
+              />
+            </div>
           </div>
           
           <div>
@@ -450,7 +621,10 @@ const ArticleManagement: React.FC = () => {
               <span>{selectedArticle.publishDate}</span>
               <span>{selectedArticle.views} views</span>
             </div>
-            <p className="text-gray-700 leading-relaxed">{selectedArticle.content}</p>
+            <div 
+              className="prose prose-green max-w-none text-gray-700 leading-relaxed"
+              dangerouslySetInnerHTML={{ __html: selectedArticle.content }}
+            />
             
             <div className="flex gap-2 mt-6 pt-6 border-t border-gray-100">
               <button
@@ -519,6 +693,55 @@ const ArticleManagement: React.FC = () => {
               Hapus
             </button>
           </div>
+        </div>
+      </Modal>
+
+      {/* Image Crop Modal */}
+      <Modal
+        isOpen={isCropModalOpen}
+        onClose={() => setIsCropModalOpen(false)}
+        title="Potong Gambar Banner (16:9)"
+        size="lg"
+      >
+        <div className="relative w-full h-96 bg-gray-900 rounded-lg overflow-hidden" style={{ touchAction: 'none' }}>
+          {imageSrc && (
+            <Cropper
+              image={imageSrc}
+              crop={crop}
+              zoom={zoom}
+              aspect={16 / 9}
+              onCropChange={setCrop}
+              onCropComplete={onCropComplete}
+              onZoomChange={setZoom}
+            />
+          )}
+        </div>
+        <div className="mt-4 flex items-center gap-4">
+          <span className="text-sm font-medium text-gray-700 w-16">Zoom</span>
+          <input
+            type="range"
+            value={zoom}
+            min={1}
+            max={3}
+            step={0.1}
+            aria-labelledby="Zoom"
+            onChange={(e) => setZoom(Number(e.target.value))}
+            className="flex-1"
+          />
+        </div>
+        <div className="flex gap-3 pt-6 border-t border-gray-100 mt-6">
+          <button
+            onClick={() => setIsCropModalOpen(false)}
+            className="flex-1 px-4 py-2.5 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
+          >
+            Batal
+          </button>
+          <button
+            onClick={showCroppedImage}
+            className="flex-1 px-4 py-2.5 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+          >
+            Simpan Potongan
+          </button>
         </div>
       </Modal>
     </div>

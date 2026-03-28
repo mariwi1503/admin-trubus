@@ -15,7 +15,8 @@ import {
   Archive,
   Briefcase,
   QrCode,
-  Store
+  Store,
+  Tag
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -42,6 +43,7 @@ const menuItems: MenuItem[] = [
   { id: 'articles', label: 'Artikel', icon: FileText, roles: ['super_admin'] },
   { id: 'products', label: 'Produk', icon: Package },
   { id: 'orders', label: 'Pesanan', icon: ShoppingCart },
+  { id: 'promos', label: 'Promo & Flash Sale', icon: Tag, roles: ['super_admin'] },
   { id: 'qrcode', label: 'QR Code', icon: QrCode },
   { id: 'arsip', label: 'Arsip', icon: Archive, roles: ['super_admin'] },
   { id: 'clients', label: 'Klien', icon: Briefcase, roles: ['super_admin'] },
