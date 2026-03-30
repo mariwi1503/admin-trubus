@@ -16,7 +16,8 @@ import {
   Briefcase,
   QrCode,
   Store,
-  Tag
+  Tag,
+  MessageCircleQuestion
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -44,6 +45,7 @@ const menuItems: MenuItem[] = [
   { id: 'products', label: 'Produk', icon: Package },
   { id: 'orders', label: 'Pesanan', icon: ShoppingCart },
   { id: 'promos', label: 'Promo & Flash Sale', icon: Tag, roles: ['super_admin'] },
+  { id: 'faqs', label: 'FAQ', icon: MessageCircleQuestion, roles: ['super_admin'] },
   { id: 'qrcode', label: 'QR Code', icon: QrCode },
   { id: 'arsip', label: 'Arsip', icon: Archive, roles: ['super_admin'] },
   { id: 'clients', label: 'Klien', icon: Briefcase, roles: ['super_admin'] },

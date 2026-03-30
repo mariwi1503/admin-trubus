@@ -132,6 +132,17 @@ export interface Promo {
   banner?: string;
 }
 
+export interface FAQ {
+  id: string;
+  question: string;
+  answer: string;
+  category: string;
+  status: 'published' | 'draft';
+  isFeatured: boolean;
+  order: number;
+  lastUpdated: string;
+}
+
 // Helper: hitung harga setelah diskon
 export function calculateDiscountedPrice(price: number, promo: Promo): number {
   if (promo.discountType === 'percentage') {
@@ -352,6 +363,69 @@ export const dummyPromos: Promo[] = [
     status: 'draft',
     applicableProducts: ['9', '16'],
     usageCount: 0,
+  },
+];
+
+export const dummyFAQs: FAQ[] = [
+  {
+    id: '1',
+    question: 'Bagaimana cara membuat akun di aplikasi Trubus?',
+    answer: 'Pengguna dapat membuat akun melalui halaman daftar dengan mengisi nama, email, nomor ponsel, dan kata sandi. Setelah itu lakukan verifikasi sesuai instruksi yang dikirimkan.',
+    category: 'Akun',
+    status: 'published',
+    isFeatured: true,
+    order: 1,
+    lastUpdated: '2026-03-18',
+  },
+  {
+    id: '2',
+    question: 'Apakah saya bisa memesan produk dari toko tertentu?',
+    answer: 'Bisa. Sistem akan menampilkan produk berdasarkan toko yang tersedia. Pengguna dapat memilih toko saat melihat detail produk atau saat checkout jika opsi tersebut tersedia.',
+    category: 'Pesanan',
+    status: 'published',
+    isFeatured: true,
+    order: 2,
+    lastUpdated: '2026-03-20',
+  },
+  {
+    id: '3',
+    question: 'Metode pembayaran apa saja yang tersedia?',
+    answer: 'Saat ini tersedia transfer bank, e-wallet, dan COD untuk area tertentu. Metode yang aktif dapat berbeda tergantung lokasi pengiriman dan kebijakan toko.',
+    category: 'Pembayaran',
+    status: 'published',
+    isFeatured: false,
+    order: 3,
+    lastUpdated: '2026-03-22',
+  },
+  {
+    id: '4',
+    question: 'Bagaimana cara menghubungi ahli pertanian?',
+    answer: 'Masuk ke menu konsultasi, pilih ahli yang sesuai dengan kebutuhan Anda, lalu lakukan penjadwalan atau mulai konsultasi jika ahli sedang tersedia.',
+    category: 'Konsultasi',
+    status: 'published',
+    isFeatured: true,
+    order: 4,
+    lastUpdated: '2026-03-24',
+  },
+  {
+    id: '5',
+    question: 'Apa yang harus dilakukan jika pesanan belum diproses?',
+    answer: 'Admin toko perlu memeriksa status pembayaran, ketersediaan stok, dan antrean pesanan. Jika semua valid, pesanan dapat dipindahkan ke status processing.',
+    category: 'Operasional',
+    status: 'draft',
+    isFeatured: false,
+    order: 5,
+    lastUpdated: '2026-03-26',
+  },
+  {
+    id: '6',
+    question: 'Bagaimana kebijakan retur produk?',
+    answer: 'Retur dapat diajukan dalam periode yang ditentukan selama produk rusak, tidak sesuai, atau ada kendala kualitas. Bukti foto dan nomor pesanan perlu dilampirkan saat pengajuan.',
+    category: 'Pengiriman',
+    status: 'published',
+    isFeatured: false,
+    order: 6,
+    lastUpdated: '2026-03-28',
   },
 ];
 
