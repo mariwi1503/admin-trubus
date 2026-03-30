@@ -41,7 +41,6 @@ export default function ProductManagement() {
     name: '',
     category: '',
     price: 0,
-    stock: 0,
     description: '',
     image: '',
     status: 'active' as 'active' | 'inactive' | 'out_of_stock',
@@ -153,7 +152,6 @@ export default function ProductManagement() {
         name: product.name,
         category: product.category,
         price: product.price,
-        stock: product.stock,
         description: product.description,
         image: product.image,
         status: product.status,
@@ -167,7 +165,6 @@ export default function ProductManagement() {
         name: '',
         category: '',
         price: 0,
-        stock: 0,
         description: '',
         image: '',
         status: 'active',
@@ -182,10 +179,7 @@ export default function ProductManagement() {
   const handleSave = async () => {
     setIsSaving(true);
     try {
-      const productData = {
-        ...formData,
-        status: formData.stock === 0 ? 'out_of_stock' as const : formData.status,
-      };
+      const productData = { ...formData };
 
       if (selectedProduct) {
         await productsService.update(selectedProduct.id, productData);
@@ -221,17 +215,6 @@ export default function ProductManagement() {
     }
   };
 
-  const handleStockUpdate = async (product: Product, newStock: number) => {
-    try {
-      await productsService.update(product.id, {
-        stock: newStock,
-        status: newStock === 0 ? 'out_of_stock' : product.status
-      });
-    } catch (error) {
-      console.error('Error updating stock:', error);
-    }
-  };
-
   const getStatusBadge = (status: string) => {
     const styles = {
       active: 'bg-green-100 text-green-700',
@@ -250,8 +233,6 @@ export default function ProductManagement() {
     );
   };
 
-  const lowStockProducts = products.filter(p => p.stock > 0 && p.stock <= 10);
-
   return (
     <div className="space-y-6">
       {/* Connection Status */}
@@ -269,19 +250,6 @@ export default function ProductManagement() {
           </>
         )}
       </div>
-
-      {/* Low Stock Alert */}
-      {lowStockProducts.length > 0 && (
-        <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 flex items-start gap-3">
-          <AlertTriangle className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
-          <div>
-            <p className="font-medium text-amber-800">Peringatan Stok Rendah</p>
-            <p className="text-sm text-amber-700 mt-1">
-              {lowStockProducts.length} produk memiliki stok rendah (≤10): {lowStockProducts.map(p => p.name).join(', ')}
-            </p>
-          </div>
-        </div>
-      )}
 
       {/* Header Actions */}
       <div className="flex flex-col gap-4">
@@ -436,13 +404,6 @@ export default function ProductManagement() {
                 />
                 <div className="absolute top-3 left-3 flex flex-col gap-2">
                   <div>{getStatusBadge(product.status)}</div>
-                  {product.stock <= 10 && product.stock > 0 && (
-                    <div>
-                      <span className="bg-amber-100 text-amber-700 px-2 py-1 rounded-full text-xs font-medium inline-flex items-center gap-1 shadow-sm">
-                        <AlertTriangle className="w-3 h-3" /> Stok Rendah
-                      </span>
-                    </div>
-                  )}
                 </div>
                 <div className="absolute top-3 right-3 flex flex-col gap-1 items-end">
                   <span className={`px-2 py-1 rounded-full text-xs font-medium shadow-sm ${product.isDisplayed ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-700'}`}>
@@ -490,10 +451,6 @@ export default function ProductManagement() {
                 <div className="flex items-center justify-between mt-4 pt-4 border-t border-gray-100">
                   <div className="text-sm text-gray-500 flex gap-4">
                     <div className="flex flex-col">
-                      <span className="text-xs text-gray-400">Stok</span>
-                      <span className="font-medium text-gray-700">{product.stock} {product.uom}</span>
-                    </div>
-                    <div className="flex flex-col">
                       <span className="text-xs text-gray-400">Terjual</span>
                       <span className="font-medium text-gray-700">{product.sold}</span>
                     </div>
@@ -532,7 +489,6 @@ export default function ProductManagement() {
                   <th className="text-left px-6 py-4 text-sm font-semibold text-gray-600">Produk</th>
                   <th className="text-left px-6 py-4 text-sm font-semibold text-gray-600">Kategori</th>
                   <th className="text-left px-6 py-4 text-sm font-semibold text-gray-600">Harga</th>
-                  <th className="text-left px-6 py-4 text-sm font-semibold text-gray-600">Stok</th>
                   <th className="text-left px-6 py-4 text-sm font-semibold text-gray-600">Terjual</th>
                   <th className="text-left px-6 py-4 text-sm font-semibold text-gray-600">Tampil di Toko</th>
                   <th className="text-left px-6 py-4 text-sm font-semibold text-gray-600">Status</th>
@@ -582,20 +538,6 @@ export default function ProductManagement() {
                         }
                         return formatCurrency(product.price);
                       })()}
-                    </td>
-                    <td className="px-6 py-4">
-                      <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
-                        <input
-                          type="number"
-                          value={product.stock}
-                          onChange={(e) => handleStockUpdate(product, parseInt(e.target.value) || 0)}
-                          className="w-20 px-2 py-1 border border-gray-200 rounded text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
-                          min="0"
-                        />
-                        {product.stock <= 10 && product.stock > 0 && (
-                          <AlertTriangle className="w-4 h-4 text-amber-500" />
-                        )}
-                      </div>
                     </td>
                     <td className="px-6 py-4 text-sm text-gray-700">{product.sold}</td>
                     <td className="px-6 py-4">
@@ -732,27 +674,15 @@ export default function ProductManagement() {
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Harga (Rp)</label>
-              <input
-                type="number"
-                value={formData.price}
-                onChange={(e) => setFormData({ ...formData, price: parseInt(e.target.value) || 0 })}
-                className="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
-                min="0"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Stok</label>
-              <input
-                type="number"
-                value={formData.stock}
-                onChange={(e) => setFormData({ ...formData, stock: parseInt(e.target.value) || 0 })}
-                className="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
-                min="0"
-              />
-            </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Harga (Rp)</label>
+            <input
+              type="number"
+              value={formData.price}
+              onChange={(e) => setFormData({ ...formData, price: parseInt(e.target.value) || 0 })}
+              className="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+              min="0"
+            />
           </div>
 
           <div>

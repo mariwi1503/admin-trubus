@@ -62,7 +62,7 @@ interface DbProduct {
   name: string;
   category: string;
   price: number;
-  stock: number;
+  stock?: number;
   sold: number;
   status: 'active' | 'inactive' | 'out_of_stock';
   image: string;
@@ -207,7 +207,6 @@ const dbToProduct = (db: DbProduct): Product => ({
   name: db.name,
   category: db.category,
   price: db.price,
-  stock: db.stock,
   sold: db.sold,
   status: db.status,
   image: db.image,
@@ -219,7 +218,6 @@ const productToDb = (product: Partial<Product>): Partial<DbProduct> => ({
   name: product.name,
   category: product.category,
   price: product.price,
-  stock: product.stock,
   sold: product.sold,
   status: product.status,
   image: product.image,

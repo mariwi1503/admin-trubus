@@ -30,7 +30,6 @@ const QRCodeManagement: React.FC = () => {
         name: '',
         category: '',
         price: 0,
-        stock: 0,
         description: '',
         image: '',
         status: 'active' as 'active' | 'inactive' | 'out_of_stock',
@@ -114,7 +113,6 @@ const QRCodeManagement: React.FC = () => {
             name: product.name,
             category: product.category,
             price: product.price,
-            stock: product.stock,
             description: product.description,
             image: product.image,
             status: product.status,
@@ -128,10 +126,7 @@ const QRCodeManagement: React.FC = () => {
     const handleSaveEdit = async () => {
         setIsSaving(true);
         try {
-            const productData = {
-                ...formData,
-                status: formData.stock === 0 ? 'out_of_stock' as const : formData.status,
-            };
+            const productData = { ...formData };
 
             if (selectedProduct) {
                 await productsService.update(selectedProduct.id, productData);
@@ -430,27 +425,15 @@ const QRCodeManagement: React.FC = () => {
                             </div>
                         </div>
 
-                        <div className="grid grid-cols-2 gap-4">
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Harga (Rp)</label>
-                                <input
-                                    type="number"
-                                    value={formData.price}
-                                    onChange={(e) => setFormData({ ...formData, price: parseInt(e.target.value) || 0 })}
-                                    className="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
-                                    min="0"
-                                />
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Stok</label>
-                                <input
-                                    type="number"
-                                    value={formData.stock}
-                                    onChange={(e) => setFormData({ ...formData, stock: parseInt(e.target.value) || 0 })}
-                                    className="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
-                                    min="0"
-                                />
-                            </div>
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Harga (Rp)</label>
+                            <input
+                                type="number"
+                                value={formData.price}
+                                onChange={(e) => setFormData({ ...formData, price: parseInt(e.target.value) || 0 })}
+                                className="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+                                min="0"
+                            />
                         </div>
 
                         <div>
