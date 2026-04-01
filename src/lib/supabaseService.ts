@@ -4,6 +4,7 @@ import {
   dummyUsers, dummyExperts, dummyArticles, dummyProducts, dummyOrders, dummyStores,
   dummyPaymentMethods, defaultSystemSettings
 } from '@/data/adminData';
+import { formatDateOnly } from '@/lib/date';
 
 
 // Type definitions for database rows
@@ -77,6 +78,7 @@ interface DbOrder {
   customer_email: string;
   items: { name: string; qty: number; price: number }[];
   total: number;
+  order_type?: 'delivery' | 'pickup';
   status: 'pending' | 'processing' | 'shipped' | 'delivered' | 'cancelled';
   payment_method: string;
   payment_status: 'paid' | 'unpaid' | 'refunded';
@@ -115,7 +117,7 @@ const dbToUser = (db: DbUser): User => ({
   phone: db.phone,
   role: db.role,
   status: db.status,
-  joinDate: db.join_date,
+  joinDate: formatDateOnly(db.join_date),
   totalOrders: db.total_orders,
   totalSpent: db.total_spent,
   avatar: db.avatar,
@@ -186,7 +188,7 @@ const dbToArticle = (db: DbArticle): Article => ({
   content: db.content,
   author: db.author,
   status: db.status,
-  publishDate: db.publish_date,
+  publishDate: formatDateOnly(db.publish_date),
   views: db.views,
   image: db.image,
 });
@@ -232,10 +234,11 @@ const dbToOrder = (db: DbOrder): Order => ({
   customerEmail: db.customer_email,
   items: db.items,
   total: db.total,
+  orderType: db.order_type ?? 'delivery',
   status: db.status,
   paymentMethod: db.payment_method,
   paymentStatus: db.payment_status,
-  orderDate: db.order_date,
+  orderDate: formatDateOnly(db.order_date),
   shippingAddress: db.shipping_address,
   storeId: db.store_id,
 });
@@ -246,6 +249,7 @@ const orderToDb = (order: Partial<Order>): Partial<DbOrder> => ({
   customer_email: order.customerEmail,
   items: order.items,
   total: order.total,
+  order_type: order.orderType,
   status: order.status,
   payment_method: order.paymentMethod,
   payment_status: order.paymentStatus,

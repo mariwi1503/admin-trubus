@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { User, dummyOrders } from '@/data/adminData';
 import { ChevronLeft, Save, User as UserIcon, Phone, Mail, Shield, ShieldCheck, Activity, ShoppingBag, Coins, MessageSquare, ExternalLink, MapPin } from 'lucide-react';
+import { formatDateOnly } from '@/lib/date';
 
 interface UserDetailProps {
     user: User | null;
@@ -343,7 +344,7 @@ const UserDetail: React.FC<UserDetailProps> = ({ user, onBack, onSave }) => {
                                             {userOrders.map(order => (
                                                 <tr key={order.id} className="hover:bg-gray-50 transition-colors">
                                                     <td className="px-4 py-3 font-medium text-blue-600">{order.orderNumber}</td>
-                                                    <td className="px-4 py-3 text-gray-600">{order.orderDate}</td>
+                                                    <td className="px-4 py-3 text-gray-600">{formatDateOnly(order.orderDate)}</td>
                                                     <td className="px-4 py-3 font-bold text-gray-800">{formatCurrency(order.total)}</td>
                                                     <td className="px-4 py-3">
                                                         <span className={`px-2 py-1 rounded text-[10px] font-bold uppercase

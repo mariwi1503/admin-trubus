@@ -15,6 +15,7 @@ import {
 } from 'lucide-react';
 import { FAQ, dummyFAQs } from '@/data/adminData';
 import Modal from './Modal';
+import { formatDateOnly, getCurrentDateOnly } from '@/lib/date';
 
 const emptyForm = {
   question: '',
@@ -103,7 +104,7 @@ const FAQManagement: React.FC = () => {
       question: formData.question.trim(),
       answer: formData.answer.trim(),
       category: formData.category.trim(),
-      lastUpdated: new Date().toISOString().split('T')[0],
+      lastUpdated: getCurrentDateOnly(),
     };
 
     if (!payload.question || !payload.answer || !payload.category) return;
@@ -140,7 +141,7 @@ const FAQManagement: React.FC = () => {
           ? {
               ...item,
               isFeatured: !item.isFeatured,
-              lastUpdated: new Date().toISOString().split('T')[0],
+              lastUpdated: getCurrentDateOnly(),
             }
           : item
       )
@@ -290,7 +291,7 @@ const FAQManagement: React.FC = () => {
                                 {faq.question}
                               </h3>
                               <p className="text-sm text-gray-500 mt-1">
-                                Diperbarui {new Date(faq.lastUpdated).toLocaleDateString('id-ID')}
+                                Diperbarui {formatDateOnly(faq.lastUpdated)}
                               </p>
                             </div>
                             {isExpanded ? (

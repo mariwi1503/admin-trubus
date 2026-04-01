@@ -1,22 +1,32 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 import { toast } from '@/components/ui/use-toast';
-import { User, dummyUsers } from '@/data/adminData';
+import { ChatConversation, User, dummyChatConversations, dummyUsers } from '@/data/adminData';
 
 interface AppContextType {
   sidebarOpen: boolean;
   toggleSidebar: () => void;
   user: User | null;
+  chatConversations: ChatConversation[];
   login: (email: string) => boolean;
   logout: () => void;
+  assignChatToCurrentUser: (conversationId: string) => void;
+  resolveChat: (conversationId: string) => void;
+  sendChatReply: (conversationId: string, message: string) => void;
+  markChatAsRead: (conversationId: string) => void;
 }
 
 const defaultAppContext: AppContextType = {
   sidebarOpen: false,
   toggleSidebar: () => { },
   user: null,
+  chatConversations: [],
   login: () => false,
   logout: () => { },
+  assignChatToCurrentUser: () => { },
+  resolveChat: () => { },
+  sendChatReply: () => { },
+  markChatAsRead: () => { },
 };
 
 const AppContext = createContext<AppContextType>(defaultAppContext);
@@ -26,6 +36,7 @@ export const useAppContext = () => useContext(AppContext);
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [user, setUser] = useState<User | null>(null);
+  const [chatConversations, setChatConversations] = useState<ChatConversation[]>(dummyChatConversations);
 
   useEffect(() => {
     // Check for existing session
@@ -92,14 +103,93 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     });
   };
 
+  const updateConversation = (
+    conversationId: string,
+    updater: (conversation: ChatConversation) => ChatConversation
+  ) => {
+    setChatConversations((prev) =>
+      prev.map((conversation) => (conversation.id === conversationId ? updater(conversation) : conversation))
+    );
+  };
+
+  const assignChatToCurrentUser = (conversationId: string) => {
+    if (!user) return;
+
+    updateConversation(conversationId, (conversation) => ({
+      ...conversation,
+      status: conversation.status === 'waiting' ? 'active' : conversation.status,
+      assignedAdmin: user.name,
+      messages: [
+        ...conversation.messages,
+        {
+          id: uuidv4(),
+          sender: 'system',
+          content: `Chat diambil oleh ${user.name}.`,
+          timestamp: new Date().toISOString(),
+        },
+      ],
+    }));
+  };
+
+  const resolveChat = (conversationId: string) => {
+    updateConversation(conversationId, (conversation) => ({
+      ...conversation,
+      status: 'resolved',
+      unreadCount: 0,
+      messages: [
+        ...conversation.messages,
+        {
+          id: uuidv4(),
+          sender: 'system',
+          content: 'Percakapan ditandai selesai oleh admin.',
+          timestamp: new Date().toISOString(),
+        },
+      ],
+    }));
+  };
+
+  const sendChatReply = (conversationId: string, message: string) => {
+    if (!user || !message.trim()) return;
+
+    updateConversation(conversationId, (conversation) => ({
+      ...conversation,
+      status: conversation.status === 'waiting' ? 'active' : conversation.status,
+      assignedAdmin: conversation.assignedAdmin || user.name,
+      lastMessageAt: new Date().toISOString(),
+      unreadCount: 0,
+      messages: [
+        ...conversation.messages,
+        {
+          id: uuidv4(),
+          sender: 'admin',
+          content: message.trim(),
+          timestamp: new Date().toISOString(),
+          authorName: user.name,
+        },
+      ],
+    }));
+  };
+
+  const markChatAsRead = (conversationId: string) => {
+    updateConversation(conversationId, (conversation) => ({
+      ...conversation,
+      unreadCount: 0,
+    }));
+  };
+
   return (
     <AppContext.Provider
       value={{
         sidebarOpen,
         toggleSidebar,
         user,
+        chatConversations,
         login,
-        logout
+        logout,
+        assignChatToCurrentUser,
+        resolveChat,
+        sendChatReply,
+        markChatAsRead,
       }}
     >
       {children}

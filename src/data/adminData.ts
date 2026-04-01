@@ -68,6 +68,8 @@ export interface Product {
   sku?: string;
   uom?: string;
   isDisplayed?: boolean;
+  isPortalDisplayed?: boolean;
+  requiresWoodPackaging?: boolean;
   storeId?: string; // Added storeId
   activePromoId?: string; // referensi ke promo aktif
   discountedPrice?: number; // harga setelah diskon
@@ -80,6 +82,7 @@ export interface Order {
   customerEmail: string;
   items: { name: string; qty: number; price: number }[];
   total: number;
+  orderType: 'delivery' | 'pickup';
   status: 'pending' | 'processing' | 'shipped' | 'delivered' | 'cancelled';
   paymentMethod: string;
   paymentStatus: 'paid' | 'unpaid' | 'refunded';
@@ -140,6 +143,32 @@ export interface FAQ {
   isFeatured: boolean;
   order: number;
   lastUpdated: string;
+}
+
+export interface ChatMessage {
+  id: string;
+  sender: 'customer' | 'admin' | 'system';
+  content: string;
+  timestamp: string;
+  authorName?: string;
+}
+
+export interface ChatConversation {
+  id: string;
+  customerName: string;
+  customerEmail: string;
+  customerAvatar: string;
+  status: 'waiting' | 'active' | 'resolved';
+  priority: 'low' | 'medium' | 'high';
+  topic: string;
+  channel: 'web' | 'whatsapp' | 'mobile';
+  storeId?: string;
+  assignedAdmin?: string;
+  unreadCount: number;
+  tags: string[];
+  linkedOrderId?: string;
+  lastMessageAt: string;
+  messages: ChatMessage[];
 }
 
 // Helper: hitung harga setelah diskon
@@ -260,21 +289,21 @@ export const dummyProducts: Product[] = [
 ];
 
 export const dummyOrders: Order[] = [
-  { id: '1', orderNumber: 'ORD-2024-001', customerName: 'Ahmad Sutrisno', customerEmail: 'ahmad@email.com', items: [{ name: 'Benih Padi Ciherang Super', qty: 5, price: 85000 }, { name: 'Pupuk NPK Phonska', qty: 2, price: 320000 }], total: 1065000, status: 'delivered', paymentMethod: 'Bank BCA', paymentStatus: 'paid', orderDate: '2024-01-15', shippingAddress: 'Jl. Tani Makmur No. 15, Subang', storeId: '1' },
-  { id: '2', orderNumber: 'ORD-2024-002', customerName: 'Siti Rahayu', customerEmail: 'siti@email.com', items: [{ name: 'Sprayer Elektrik 16L', qty: 1, price: 450000 }], total: 450000, status: 'shipped', paymentMethod: 'GoPay', paymentStatus: 'paid', orderDate: '2024-01-18', shippingAddress: 'Jl. Sawah Indah No. 8, Karawang', storeId: '2' },
-  { id: '3', orderNumber: 'ORD-2024-003', customerName: 'Budi Santoso', customerEmail: 'budi@email.com', items: [{ name: 'Benih Cabai Rawit Dewata', qty: 10, price: 45000 }, { name: 'Pupuk Organik Cair Bio-G', qty: 3, price: 125000 }], total: 825000, status: 'processing', paymentMethod: 'Bank Mandiri', paymentStatus: 'paid', orderDate: '2024-01-20', shippingAddress: 'Jl. Petani Jaya No. 22, Indramayu', storeId: '1' },
-  { id: '4', orderNumber: 'ORD-2024-004', customerName: 'Dewi Lestari', customerEmail: 'dewi@email.com', items: [{ name: 'Cangkul Baja Anti Karat', qty: 2, price: 175000 }], total: 350000, status: 'pending', paymentMethod: 'Bank BRI', paymentStatus: 'unpaid', orderDate: '2024-01-22', shippingAddress: 'Jl. Desa Makmur No. 5, Cirebon', storeId: '2' },
-  { id: '5', orderNumber: 'ORD-2024-005', customerName: 'Fitri Handayani', customerEmail: 'fitri@email.com', items: [{ name: 'Benih Tomat Cherry', qty: 8, price: 35000 }, { name: 'Polybag Hitam 35x35', qty: 2, price: 65000 }], total: 410000, status: 'delivered', paymentMethod: 'OVO', paymentStatus: 'paid', orderDate: '2024-01-25', shippingAddress: 'Jl. Kebun Raya No. 12, Bogor', storeId: '1' },
-  { id: '6', orderNumber: 'ORD-2024-006', customerName: 'Hana Permata', customerEmail: 'hana@email.com', items: [{ name: 'Pestisida Organik Neem Oil', qty: 4, price: 85000 }, { name: 'Gunting Stek Profesional', qty: 1, price: 95000 }], total: 435000, status: 'shipped', paymentMethod: 'Bank BCA', paymentStatus: 'paid', orderDate: '2024-01-28', shippingAddress: 'Jl. Taman Sari No. 7, Bandung', storeId: '2' },
-  { id: '7', orderNumber: 'ORD-2024-007', customerName: 'Irfan Hakim', customerEmail: 'irfan@email.com', items: [{ name: 'Traktor Mini 2 Roda', qty: 1, price: 15500000 }], total: 15500000, status: 'processing', paymentMethod: 'Bank Mandiri', paymentStatus: 'paid', orderDate: '2024-02-01', shippingAddress: 'Jl. Pertanian No. 45, Garut', storeId: '1' },
-  { id: '8', orderNumber: 'ORD-2024-008', customerName: 'Joko Widodo', customerEmail: 'joko@email.com', items: [{ name: 'Selang Irigasi Tetes 100m', qty: 2, price: 350000 }, { name: 'Mulsa Plastik Hitam Perak', qty: 1, price: 280000 }], total: 980000, status: 'cancelled', paymentMethod: 'COD', paymentStatus: 'refunded', orderDate: '2024-02-05', shippingAddress: 'Jl. Desa Sejahtera No. 3, Tasikmalaya', storeId: '2' },
-  { id: '9', orderNumber: 'ORD-2024-009', customerName: 'Kartini Sari', customerEmail: 'kartini@email.com', items: [{ name: 'Benih Bayam Hijau', qty: 15, price: 25000 }, { name: 'Pupuk Kandang Fermentasi', qty: 5, price: 45000 }], total: 600000, status: 'delivered', paymentMethod: 'DANA', paymentStatus: 'paid', orderDate: '2024-02-08', shippingAddress: 'Jl. Sawah Luas No. 18, Cianjur', storeId: '1' },
-  { id: '10', orderNumber: 'ORD-2024-010', customerName: 'Ahmad Sutrisno', customerEmail: 'ahmad@email.com', items: [{ name: 'Benih Melon Golden', qty: 6, price: 75000 }, { name: 'Pupuk Daun Gandasil D', qty: 4, price: 35000 }], total: 590000, status: 'pending', paymentMethod: 'Bank BNI', paymentStatus: 'unpaid', orderDate: '2024-02-10', shippingAddress: 'Jl. Tani Makmur No. 15, Subang', storeId: '1' },
-  { id: '11', orderNumber: 'ORD-2024-011', customerName: 'Budi Santoso', customerEmail: 'budi@email.com', items: [{ name: 'Fungisida Sistemik Antracol', qty: 3, price: 95000 }, { name: 'Sabit Bergerigi Premium', qty: 2, price: 125000 }], total: 535000, status: 'shipped', paymentMethod: 'GoPay', paymentStatus: 'paid', orderDate: '2024-02-12', shippingAddress: 'Jl. Petani Jaya No. 22, Indramayu', storeId: '2' },
-  { id: '12', orderNumber: 'ORD-2024-012', customerName: 'Siti Rahayu', customerEmail: 'siti@email.com', items: [{ name: 'Benih Padi Ciherang Super', qty: 10, price: 85000 }], total: 850000, status: 'processing', paymentMethod: 'Bank BCA', paymentStatus: 'paid', orderDate: '2024-02-15', shippingAddress: 'Jl. Sawah Indah No. 8, Karawang', storeId: '1' },
-  { id: '13', orderNumber: 'ORD-2024-013', customerName: 'Fitri Handayani', customerEmail: 'fitri@email.com', items: [{ name: 'Sprayer Elektrik 16L', qty: 1, price: 450000 }, { name: 'Pestisida Organik Neem Oil', qty: 2, price: 85000 }], total: 620000, status: 'pending', paymentMethod: 'OVO', paymentStatus: 'unpaid', orderDate: '2024-02-18', shippingAddress: 'Jl. Kebun Raya No. 12, Bogor', storeId: '2' },
-  { id: '14', orderNumber: 'ORD-2024-014', customerName: 'Hana Permata', customerEmail: 'hana@email.com', items: [{ name: 'Pupuk NPK Phonska 15-15-15', qty: 3, price: 320000 }], total: 960000, status: 'delivered', paymentMethod: 'Bank Mandiri', paymentStatus: 'paid', orderDate: '2024-02-20', shippingAddress: 'Jl. Taman Sari No. 7, Bandung', storeId: '1' },
-  { id: '15', orderNumber: 'ORD-2024-015', customerName: 'Irfan Hakim', customerEmail: 'irfan@email.com', items: [{ name: 'Cangkul Baja Anti Karat', qty: 3, price: 175000 }, { name: 'Gunting Stek Profesional', qty: 2, price: 95000 }], total: 715000, status: 'shipped', paymentMethod: 'DANA', paymentStatus: 'paid', orderDate: '2024-02-22', shippingAddress: 'Jl. Pertanian No. 45, Garut', storeId: '2' },
+  { id: '1', orderNumber: 'ORD-2024-001', customerName: 'Ahmad Sutrisno', customerEmail: 'ahmad@email.com', items: [{ name: 'Benih Padi Ciherang Super', qty: 5, price: 85000 }, { name: 'Pupuk NPK Phonska', qty: 2, price: 320000 }], total: 1065000, orderType: 'delivery', status: 'delivered', paymentMethod: 'Bank BCA', paymentStatus: 'paid', orderDate: '2024-01-15', shippingAddress: 'Jl. Tani Makmur No. 15, Subang', storeId: '1' },
+  { id: '2', orderNumber: 'ORD-2024-002', customerName: 'Siti Rahayu', customerEmail: 'siti@email.com', items: [{ name: 'Sprayer Elektrik 16L', qty: 1, price: 450000 }], total: 450000, orderType: 'pickup', status: 'shipped', paymentMethod: 'GoPay', paymentStatus: 'paid', orderDate: '2024-01-18', shippingAddress: 'Pengambilan di Toko Trubus Bintaro', storeId: '2' },
+  { id: '3', orderNumber: 'ORD-2024-003', customerName: 'Budi Santoso', customerEmail: 'budi@email.com', items: [{ name: 'Benih Cabai Rawit Dewata', qty: 10, price: 45000 }, { name: 'Pupuk Organik Cair Bio-G', qty: 3, price: 125000 }], total: 825000, orderType: 'delivery', status: 'processing', paymentMethod: 'Bank Mandiri', paymentStatus: 'paid', orderDate: '2024-01-20', shippingAddress: 'Jl. Petani Jaya No. 22, Indramayu', storeId: '1' },
+  { id: '4', orderNumber: 'ORD-2024-004', customerName: 'Dewi Lestari', customerEmail: 'dewi@email.com', items: [{ name: 'Cangkul Baja Anti Karat', qty: 2, price: 175000 }], total: 350000, orderType: 'pickup', status: 'pending', paymentMethod: 'Bank BRI', paymentStatus: 'unpaid', orderDate: '2024-01-22', shippingAddress: 'Pengambilan di Toko Trubus Bintaro', storeId: '2' },
+  { id: '5', orderNumber: 'ORD-2024-005', customerName: 'Fitri Handayani', customerEmail: 'fitri@email.com', items: [{ name: 'Benih Tomat Cherry', qty: 8, price: 35000 }, { name: 'Polybag Hitam 35x35', qty: 2, price: 65000 }], total: 410000, orderType: 'delivery', status: 'delivered', paymentMethod: 'OVO', paymentStatus: 'paid', orderDate: '2024-01-25', shippingAddress: 'Jl. Kebun Raya No. 12, Bogor', storeId: '1' },
+  { id: '6', orderNumber: 'ORD-2024-006', customerName: 'Hana Permata', customerEmail: 'hana@email.com', items: [{ name: 'Pestisida Organik Neem Oil', qty: 4, price: 85000 }, { name: 'Gunting Stek Profesional', qty: 1, price: 95000 }], total: 435000, orderType: 'pickup', status: 'shipped', paymentMethod: 'Bank BCA', paymentStatus: 'paid', orderDate: '2024-01-28', shippingAddress: 'Pengambilan di Toko Trubus Bintaro', storeId: '2' },
+  { id: '7', orderNumber: 'ORD-2024-007', customerName: 'Irfan Hakim', customerEmail: 'irfan@email.com', items: [{ name: 'Traktor Mini 2 Roda', qty: 1, price: 15500000 }], total: 15500000, orderType: 'delivery', status: 'processing', paymentMethod: 'Bank Mandiri', paymentStatus: 'paid', orderDate: '2024-02-01', shippingAddress: 'Jl. Pertanian No. 45, Garut', storeId: '1' },
+  { id: '8', orderNumber: 'ORD-2024-008', customerName: 'Joko Widodo', customerEmail: 'joko@email.com', items: [{ name: 'Selang Irigasi Tetes 100m', qty: 2, price: 350000 }, { name: 'Mulsa Plastik Hitam Perak', qty: 1, price: 280000 }], total: 980000, orderType: 'pickup', status: 'cancelled', paymentMethod: 'COD', paymentStatus: 'refunded', orderDate: '2024-02-05', shippingAddress: 'Pengambilan di Toko Trubus Bintaro', storeId: '2' },
+  { id: '9', orderNumber: 'ORD-2024-009', customerName: 'Kartini Sari', customerEmail: 'kartini@email.com', items: [{ name: 'Benih Bayam Hijau', qty: 15, price: 25000 }, { name: 'Pupuk Kandang Fermentasi', qty: 5, price: 45000 }], total: 600000, orderType: 'delivery', status: 'delivered', paymentMethod: 'DANA', paymentStatus: 'paid', orderDate: '2024-02-08', shippingAddress: 'Jl. Sawah Luas No. 18, Cianjur', storeId: '1' },
+  { id: '10', orderNumber: 'ORD-2024-010', customerName: 'Ahmad Sutrisno', customerEmail: 'ahmad@email.com', items: [{ name: 'Benih Melon Golden', qty: 6, price: 75000 }, { name: 'Pupuk Daun Gandasil D', qty: 4, price: 35000 }], total: 590000, orderType: 'pickup', status: 'pending', paymentMethod: 'Bank BNI', paymentStatus: 'unpaid', orderDate: '2024-02-10', shippingAddress: 'Pengambilan di Toko Trubus Cimanggis', storeId: '1' },
+  { id: '11', orderNumber: 'ORD-2024-011', customerName: 'Budi Santoso', customerEmail: 'budi@email.com', items: [{ name: 'Fungisida Sistemik Antracol', qty: 3, price: 95000 }, { name: 'Sabit Bergerigi Premium', qty: 2, price: 125000 }], total: 535000, orderType: 'delivery', status: 'shipped', paymentMethod: 'GoPay', paymentStatus: 'paid', orderDate: '2024-02-12', shippingAddress: 'Jl. Petani Jaya No. 22, Indramayu', storeId: '2' },
+  { id: '12', orderNumber: 'ORD-2024-012', customerName: 'Siti Rahayu', customerEmail: 'siti@email.com', items: [{ name: 'Benih Padi Ciherang Super', qty: 10, price: 85000 }], total: 850000, orderType: 'pickup', status: 'processing', paymentMethod: 'Bank BCA', paymentStatus: 'paid', orderDate: '2024-02-15', shippingAddress: 'Pengambilan di Toko Trubus Cimanggis', storeId: '1' },
+  { id: '13', orderNumber: 'ORD-2024-013', customerName: 'Fitri Handayani', customerEmail: 'fitri@email.com', items: [{ name: 'Sprayer Elektrik 16L', qty: 1, price: 450000 }, { name: 'Pestisida Organik Neem Oil', qty: 2, price: 85000 }], total: 620000, orderType: 'delivery', status: 'pending', paymentMethod: 'OVO', paymentStatus: 'unpaid', orderDate: '2024-02-18', shippingAddress: 'Jl. Kebun Raya No. 12, Bogor', storeId: '2' },
+  { id: '14', orderNumber: 'ORD-2024-014', customerName: 'Hana Permata', customerEmail: 'hana@email.com', items: [{ name: 'Pupuk NPK Phonska 15-15-15', qty: 3, price: 320000 }], total: 960000, orderType: 'pickup', status: 'delivered', paymentMethod: 'Bank Mandiri', paymentStatus: 'paid', orderDate: '2024-02-20', shippingAddress: 'Pengambilan di Toko Trubus Cimanggis', storeId: '1' },
+  { id: '15', orderNumber: 'ORD-2024-015', customerName: 'Irfan Hakim', customerEmail: 'irfan@email.com', items: [{ name: 'Cangkul Baja Anti Karat', qty: 3, price: 175000 }, { name: 'Gunting Stek Profesional', qty: 2, price: 95000 }], total: 715000, orderType: 'delivery', status: 'shipped', paymentMethod: 'DANA', paymentStatus: 'paid', orderDate: '2024-02-22', shippingAddress: 'Jl. Pertanian No. 45, Garut', storeId: '2' },
 ];
 
 export const dummyPaymentMethods: PaymentMethod[] = [
@@ -425,6 +454,112 @@ export const dummyFAQs: FAQ[] = [
     isFeatured: false,
     order: 6,
     lastUpdated: '2026-03-28',
+  },
+];
+
+export const dummyChatConversations: ChatConversation[] = [
+  {
+    id: 'chat-1',
+    customerName: 'Rina Puspitasari',
+    customerEmail: 'rina@email.com',
+    customerAvatar: 'RP',
+    status: 'waiting',
+    priority: 'high',
+    topic: 'Pesanan belum dikirim',
+    channel: 'web',
+    storeId: '1',
+    assignedAdmin: undefined,
+    unreadCount: 3,
+    tags: ['Pesanan', 'Urgent'],
+    linkedOrderId: 'ORD-2024-013',
+    lastMessageAt: '2026-03-31T14:12:00+07:00',
+    messages: [
+      { id: 'chat-1-msg-1', sender: 'customer', content: 'Halo admin, pesanan saya sudah dibayar tapi belum ada update pengiriman.', timestamp: '2026-03-31T13:56:00+07:00', authorName: 'Rina Puspitasari' },
+      { id: 'chat-1-msg-2', sender: 'customer', content: 'Nomor order saya ORD-2024-013. Bisa dibantu cek?', timestamp: '2026-03-31T13:59:00+07:00', authorName: 'Rina Puspitasari' },
+      { id: 'chat-1-msg-3', sender: 'system', content: 'Chat masuk ke antrean prioritas tinggi.', timestamp: '2026-03-31T14:00:00+07:00' },
+      { id: 'chat-1-msg-4', sender: 'customer', content: 'Saya butuh barangnya minggu ini untuk kebun cabai.', timestamp: '2026-03-31T14:12:00+07:00', authorName: 'Rina Puspitasari' },
+    ],
+  },
+  {
+    id: 'chat-2',
+    customerName: 'Bambang Hermawan',
+    customerEmail: 'bambang@email.com',
+    customerAvatar: 'BH',
+    status: 'active',
+    priority: 'medium',
+    topic: 'Rekomendasi pupuk untuk melon',
+    channel: 'whatsapp',
+    storeId: '2',
+    assignedAdmin: 'Admin Bandung',
+    unreadCount: 1,
+    tags: ['Konsultasi', 'Pupuk'],
+    lastMessageAt: '2026-03-31T13:44:00+07:00',
+    messages: [
+      { id: 'chat-2-msg-1', sender: 'customer', content: 'Untuk melon yang mulai masuk fase generatif, pupuk apa yang disarankan?', timestamp: '2026-03-31T13:20:00+07:00', authorName: 'Bambang Hermawan' },
+      { id: 'chat-2-msg-2', sender: 'admin', content: 'Bisa gunakan pupuk dengan kandungan kalium lebih tinggi, Pak. Apakah tanamannya di polybag atau lahan langsung?', timestamp: '2026-03-31T13:27:00+07:00', authorName: 'Admin Bandung' },
+      { id: 'chat-2-msg-3', sender: 'customer', content: 'Di polybag 40 liter, admin.', timestamp: '2026-03-31T13:44:00+07:00', authorName: 'Bambang Hermawan' },
+    ],
+  },
+  {
+    id: 'chat-3',
+    customerName: 'Sari Lestari',
+    customerEmail: 'sari@email.com',
+    customerAvatar: 'SL',
+    status: 'active',
+    priority: 'high',
+    topic: 'Komplain produk rusak',
+    channel: 'mobile',
+    storeId: '1',
+    assignedAdmin: 'Super Admin',
+    unreadCount: 2,
+    tags: ['Komplain', 'Retur'],
+    linkedOrderId: 'ORD-2024-011',
+    lastMessageAt: '2026-03-31T12:58:00+07:00',
+    messages: [
+      { id: 'chat-3-msg-1', sender: 'customer', content: 'Produk yang saya terima kemasannya sobek dan sebagian tumpah.', timestamp: '2026-03-31T12:31:00+07:00', authorName: 'Sari Lestari' },
+      { id: 'chat-3-msg-2', sender: 'customer', content: 'Saya sudah upload foto di aplikasi.', timestamp: '2026-03-31T12:32:00+07:00', authorName: 'Sari Lestari' },
+      { id: 'chat-3-msg-3', sender: 'admin', content: 'Baik, kami bantu proses pengecekan dan solusi retur/penggantian ya.', timestamp: '2026-03-31T12:36:00+07:00', authorName: 'Super Admin' },
+      { id: 'chat-3-msg-4', sender: 'customer', content: 'Mohon dibantu secepatnya karena saya butuh untuk tanam besok.', timestamp: '2026-03-31T12:58:00+07:00', authorName: 'Sari Lestari' },
+    ],
+  },
+  {
+    id: 'chat-4',
+    customerName: 'Dedi Saputra',
+    customerEmail: 'dedi@email.com',
+    customerAvatar: 'DS',
+    status: 'resolved',
+    priority: 'low',
+    topic: 'Konfirmasi promo pupuk',
+    channel: 'web',
+    storeId: '3',
+    assignedAdmin: 'Admin',
+    unreadCount: 0,
+    tags: ['Promo'],
+    lastMessageAt: '2026-03-31T10:15:00+07:00',
+    messages: [
+      { id: 'chat-4-msg-1', sender: 'customer', content: 'Promo pupuk musim tanam masih berlaku sampai kapan ya?', timestamp: '2026-03-31T09:58:00+07:00', authorName: 'Dedi Saputra' },
+      { id: 'chat-4-msg-2', sender: 'admin', content: 'Promo masih aktif sampai 20 April 2026, Pak.', timestamp: '2026-03-31T10:02:00+07:00', authorName: 'Admin' },
+      { id: 'chat-4-msg-3', sender: 'customer', content: 'Siap, terima kasih infonya.', timestamp: '2026-03-31T10:15:00+07:00', authorName: 'Dedi Saputra' },
+    ],
+  },
+  {
+    id: 'chat-5',
+    customerName: 'Nadia Aulia',
+    customerEmail: 'nadia@email.com',
+    customerAvatar: 'NA',
+    status: 'waiting',
+    priority: 'medium',
+    topic: 'Minta rekomendasi media tanam',
+    channel: 'whatsapp',
+    storeId: '2',
+    assignedAdmin: undefined,
+    unreadCount: 2,
+    tags: ['Media Tanam', 'Lead'],
+    lastMessageAt: '2026-03-31T14:05:00+07:00',
+    messages: [
+      { id: 'chat-5-msg-1', sender: 'customer', content: 'Halo, saya cari media tanam untuk jambu air di pot.', timestamp: '2026-03-31T13:48:00+07:00', authorName: 'Nadia Aulia' },
+      { id: 'chat-5-msg-2', sender: 'customer', content: 'Kalau ada yang siap pakai, boleh direkomendasikan.', timestamp: '2026-03-31T14:05:00+07:00', authorName: 'Nadia Aulia' },
+    ],
   },
 ];
 

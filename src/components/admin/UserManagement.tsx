@@ -4,6 +4,7 @@ import { User } from '@/data/adminData';
 import { usersService } from '@/lib/supabaseService';
 import Modal from './Modal';
 import UserDetail from './UserDetail';
+import { formatDateOnly, getCurrentDateOnly } from '@/lib/date';
 
 const formatCurrency = (value: number) => {
   return new Intl.NumberFormat('id-ID', {
@@ -80,7 +81,7 @@ const UserManagement: React.FC = () => {
           phone: formData.phone || '',
           role: (formData.role as 'customer' | 'super_admin' | 'store_admin') || 'customer',
           status: (formData.status as 'active' | 'inactive' | 'banned') || 'active',
-          joinDate: new Date().toISOString().split('T')[0],
+          joinDate: getCurrentDateOnly(),
           totalOrders: 0,
           totalSpent: 0,
           avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(formData.name || 'User')}&background=22c55e&color=fff`,
@@ -301,7 +302,7 @@ const UserManagement: React.FC = () => {
                         />
                         <div>
                           <p className="font-medium text-gray-800">{user.name}</p>
-                          <p className="text-xs text-gray-500">Bergabung: {user.joinDate}</p>
+                          <p className="text-xs text-gray-500">Bergabung: {formatDateOnly(user.joinDate)}</p>
                         </div>
                       </div>
                     </td>

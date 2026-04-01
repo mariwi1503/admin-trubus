@@ -4,6 +4,7 @@ import { Product } from '@/data/adminData';
 import { productsService } from '@/lib/supabaseService';
 import Modal from './Modal';
 import { useReactToPrint } from 'react-to-print';
+import { getCurrentDateOnly } from '@/lib/date';
 
 interface ProductWithQR extends Product {
     qrCode?: string;
@@ -36,6 +37,8 @@ const QRCodeManagement: React.FC = () => {
         sku: '',
         uom: '',
         isDisplayed: true,
+        isPortalDisplayed: true,
+        requiresWoodPackaging: false,
     });
     const [isSaving, setIsSaving] = useState(false);
 
@@ -54,6 +57,8 @@ const QRCodeManagement: React.FC = () => {
                     sku: p.sku || `TRB-12345-XXXX-120AAA`,
                     uom: p.uom || uoms[Math.floor(Math.random() * uoms.length)],
                     isDisplayed: p.isDisplayed !== undefined ? p.isDisplayed : true,
+                    isPortalDisplayed: p.isPortalDisplayed !== undefined ? p.isPortalDisplayed : true,
+                    requiresWoodPackaging: p.requiresWoodPackaging !== undefined ? p.requiresWoodPackaging : false,
                 }));
             });
             setIsConnected(true);
@@ -73,6 +78,8 @@ const QRCodeManagement: React.FC = () => {
                 sku: p.sku || `TRB-12345-XXXX-120AAA`,
                 uom: p.uom || uoms[Math.floor(Math.random() * uoms.length)],
                 isDisplayed: p.isDisplayed !== undefined ? p.isDisplayed : true,
+                isPortalDisplayed: p.isPortalDisplayed !== undefined ? p.isPortalDisplayed : true,
+                requiresWoodPackaging: p.requiresWoodPackaging !== undefined ? p.requiresWoodPackaging : false,
             }));
             setProducts(productsWithQR);
             setIsConnected(true);
@@ -119,6 +126,8 @@ const QRCodeManagement: React.FC = () => {
             sku: product.sku || '',
             uom: product.uom || 'Pcs',
             isDisplayed: product.isDisplayed ?? true,
+            isPortalDisplayed: product.isPortalDisplayed ?? true,
+            requiresWoodPackaging: product.requiresWoodPackaging ?? false,
         });
         setIsEditModalOpen(true);
     }
@@ -307,7 +316,7 @@ const QRCodeManagement: React.FC = () => {
                                     <p className="text-sm font-bold text-gray-600">SKU: {selectedProduct?.sku}</p>
                                     <p className="text-sm font-medium text-gray-500">Satuan: {selectedProduct?.uom}</p>
                                     <p className="text-xs font-medium text-gray-400 mt-1">
-                                        {new Date().toLocaleDateString('id-ID', { day: '2-digit', month: '2-digit', year: '2-digit' })}
+                                        {getCurrentDateOnly()}
                                     </p>
                                 </div>
 
@@ -384,17 +393,43 @@ const QRCodeManagement: React.FC = () => {
                             </div>
                         </div>
 
-                        <div className="flex items-center gap-2">
-                            <input
-                                type="checkbox"
-                                id="isDisplayedQR"
-                                checked={formData.isDisplayed}
-                                onChange={(e) => setFormData({ ...formData, isDisplayed: e.target.checked })}
-                                className="w-4 h-4 text-green-600 border-gray-300 rounded focus:ring-green-500"
-                            />
-                            <label htmlFor="isDisplayedQR" className="text-sm font-medium text-gray-700 select-none cursor-pointer">
-                                Tampilkan di Toko
-                            </label>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <div className="flex items-center gap-2">
+                                <input
+                                    type="checkbox"
+                                    id="isDisplayedQR"
+                                    checked={formData.isDisplayed}
+                                    onChange={(e) => setFormData({ ...formData, isDisplayed: e.target.checked })}
+                                    className="w-4 h-4 text-green-600 border-gray-300 rounded focus:ring-green-500"
+                                />
+                                <label htmlFor="isDisplayedQR" className="text-sm font-medium text-gray-700 select-none cursor-pointer">
+                                    Tampilkan di Aplikasi
+                                </label>
+                            </div>
+                            <div className="flex items-center gap-2">
+                                <input
+                                    type="checkbox"
+                                    id="isPortalDisplayedQR"
+                                    checked={formData.isPortalDisplayed}
+                                    onChange={(e) => setFormData({ ...formData, isPortalDisplayed: e.target.checked })}
+                                    className="w-4 h-4 text-green-600 border-gray-300 rounded focus:ring-green-500"
+                                />
+                                <label htmlFor="isPortalDisplayedQR" className="text-sm font-medium text-gray-700 select-none cursor-pointer">
+                                    Tampilkan di Portal
+                                </label>
+                            </div>
+                            <div className="flex items-center gap-2 sm:col-span-2">
+                                <input
+                                    type="checkbox"
+                                    id="requiresWoodPackagingQR"
+                                    checked={formData.requiresWoodPackaging}
+                                    onChange={(e) => setFormData({ ...formData, requiresWoodPackaging: e.target.checked })}
+                                    className="w-4 h-4 text-green-600 border-gray-300 rounded focus:ring-green-500"
+                                />
+                                <label htmlFor="requiresWoodPackagingQR" className="text-sm font-medium text-gray-700 select-none cursor-pointer">
+                                    Memerlukan packaging kayu saat pengiriman
+                                </label>
+                            </div>
                         </div>
 
                         <div className="grid grid-cols-2 gap-4">

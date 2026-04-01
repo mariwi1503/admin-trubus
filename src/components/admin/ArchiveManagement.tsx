@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Search, FileText, Download, Eye, Calendar, Tag, Plus, Upload, Building2, Trash2, X, ChevronLeft, ChevronRight, Printer } from 'lucide-react';
 import Modal from './Modal';
+import { getCurrentDateOnly } from '@/lib/date';
 
 interface Archive {
   id: string;
@@ -119,7 +120,7 @@ const ArchiveManagement: React.FC = () => {
       id: (archives.length + 1).toString(),
       title: generateForm.title || `${generateForm.type} - ${generateForm.clientName}`,
       type: generateForm.type,
-      date: new Date().toISOString().split('T')[0],
+      date: getCurrentDateOnly(),
       size: '15 KB',
       status: 'draft',
       clientName: generateForm.clientName,
@@ -136,7 +137,7 @@ const ArchiveManagement: React.FC = () => {
       id: (archives.length + 1).toString(),
       title: uploadForm.title || uploadForm.file?.name || 'Dokumen Tanpa Judul',
       type: uploadForm.type,
-      date: new Date().toISOString().split('T')[0],
+      date: getCurrentDateOnly(),
       size: uploadForm.file ? `${(uploadForm.file.size / 1024 / 1024).toFixed(2)} MB` : '1 MB',
       status: 'published',
       clientName: uploadForm.clientName,

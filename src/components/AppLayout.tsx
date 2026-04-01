@@ -19,6 +19,7 @@ import ClientManagement from './admin/ClientManagement';
 import QRCodeManagement from './admin/QRCodeManagement';
 import PromoManagement from './admin/PromoManagement';
 import FAQManagement from './admin/FAQManagement';
+import LiveChatManagement from './admin/LiveChatManagement';
 
 import StoreManagement from './admin/StoreManagement';
 
@@ -62,6 +63,7 @@ const AppLayout: React.FC = () => {
       experts: 'Kelola Ahli',
       articles: 'Kelola Artikel',
       products: 'Kelola Produk',
+      'live-chat': 'Live Chat',
       'products-all': 'Semua Produk',
       'products-store': 'Produk di Toko',
       orders: 'Kelola Pesanan',
@@ -88,6 +90,8 @@ const AppLayout: React.FC = () => {
         return <ArticleManagement />;
       case 'products':
         return <ProductManagement />;
+      case 'live-chat':
+        return <LiveChatManagement />;
       case 'orders':
         return <OrderManagement />;
       case 'promos':

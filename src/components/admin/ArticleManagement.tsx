@@ -7,6 +7,7 @@ import Cropper, { Point, Area } from 'react-easy-crop';
 import ReactQuill from 'react-quill';
 import 'react-quill/dist/quill.snow.css';
 import { getCroppedImg } from '@/lib/cropImage';
+import { formatDateOnly, getCurrentDateOnly } from '@/lib/date';
 
 const ArticleManagement: React.FC = () => {
   const [articles, setArticles] = useState<Article[]>([]);
@@ -144,7 +145,7 @@ const ArticleManagement: React.FC = () => {
       } else {
         await articlesService.create({
           ...formData,
-          publishDate: new Date().toISOString().split('T')[0],
+          publishDate: getCurrentDateOnly(),
           views: 0,
         });
       }
@@ -364,7 +365,7 @@ const ArticleManagement: React.FC = () => {
                       <div className="flex items-center gap-3 mt-1">
                         <span className="flex items-center gap-1">
                           <Calendar className="w-3 h-3" />
-                          {article.publishDate}
+                          {formatDateOnly(article.publishDate)}
                         </span>
                         <span className="flex items-center gap-1">
                           <Eye className="w-3 h-3" />
@@ -440,7 +441,7 @@ const ArticleManagement: React.FC = () => {
                       <td className="px-6 py-4 text-gray-600 whitespace-nowrap">
                         <div className="flex items-center gap-1">
                           <Calendar className="w-3 h-3" />
-                          {article.publishDate}
+                          {formatDateOnly(article.publishDate)}
                         </div>
                       </td>
                       <td className="px-6 py-4">
@@ -618,7 +619,7 @@ const ArticleManagement: React.FC = () => {
             <h2 className="text-2xl font-bold text-gray-800 mb-4">{selectedArticle.title}</h2>
             <div className="flex items-center gap-4 text-sm text-gray-500 mb-6">
               <span>Oleh: {selectedArticle.author}</span>
-              <span>{selectedArticle.publishDate}</span>
+              <span>{formatDateOnly(selectedArticle.publishDate)}</span>
               <span>{selectedArticle.views} views</span>
             </div>
             <div 

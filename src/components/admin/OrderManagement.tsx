@@ -7,6 +7,7 @@ import {
 import { useAppContext } from '@/contexts/AppContext';
 import { Order, dummyStores, dummyOrders, dummyPromos } from '@/data/adminData';
 import { ordersService } from '@/lib/supabaseService';
+import { formatDateOnly } from '@/lib/date';
 import Modal from './Modal';
 
 const formatCurrency = (value: number) => {
@@ -15,6 +16,20 @@ const formatCurrency = (value: number) => {
     currency: 'IDR',
     minimumFractionDigits: 0,
   }).format(value);
+};
+
+const getOrderTypeMeta = (orderType: Order['orderType']) => {
+  if (orderType === 'pickup') {
+    return {
+      label: 'Jemput di Toko',
+      badge: 'bg-sky-100 text-sky-700',
+    };
+  }
+
+  return {
+    label: 'Dikirim',
+    badge: 'bg-emerald-100 text-emerald-700',
+  };
 };
 
 const OrderManagement: React.FC = () => {
@@ -164,6 +179,10 @@ const OrderManagement: React.FC = () => {
     shipped: orders.filter(o => o.status === 'shipped').length,
     delivered: orders.filter(o => o.status === 'delivered').length,
     cancelled: orders.filter(o => o.status === 'cancelled').length,
+  };
+
+  const getStoreName = (storeId: string) => {
+    return dummyStores.find((store) => store.id === storeId)?.name ?? 'Toko tidak diketahui';
   };
 
   return (
@@ -322,6 +341,7 @@ const OrderManagement: React.FC = () => {
                   <th className="text-left px-6 py-4 text-sm font-semibold text-gray-600">No. Pesanan</th>
                   <th className="text-left px-6 py-4 text-sm font-semibold text-gray-600">Pelanggan</th>
                   <th className="text-left px-6 py-4 text-sm font-semibold text-gray-600">Tanggal</th>
+                  <th className="text-left px-6 py-4 text-sm font-semibold text-gray-600">Jenis Pesanan</th>
                   <th className="text-left px-6 py-4 text-sm font-semibold text-gray-600">Total</th>
                   <th className="text-left px-6 py-4 text-sm font-semibold text-gray-600">Diskon</th>
                   <th className="text-left px-6 py-4 text-sm font-semibold text-gray-600">Pembayaran</th>
@@ -347,7 +367,12 @@ const OrderManagement: React.FC = () => {
                       <p className="text-sm font-medium text-gray-800">{order.customerName}</p>
                       <p className="text-xs text-gray-400">{order.customerEmail}</p>
                     </td>
-                    <td className="px-6 py-4 text-sm text-gray-600">{order.orderDate}</td>
+                    <td className="px-6 py-4 text-sm text-gray-600">{formatDateOnly(order.orderDate)}</td>
+                    <td className="px-6 py-4">
+                      <span className={`inline-flex px-3 py-1 rounded-full text-xs font-medium ${getOrderTypeMeta(order.orderType).badge}`}>
+                        {getOrderTypeMeta(order.orderType).label}
+                      </span>
+                    </td>
                     <td className="px-6 py-4 text-sm font-bold text-gray-900">{formatCurrency(order.total)}</td>
                     <td className="px-6 py-4">
                       {(() => {
@@ -426,7 +451,7 @@ const OrderManagement: React.FC = () => {
             <div className="flex items-start justify-between border-b pb-4">
               <div>
                 <h3 className="text-xl font-black text-gray-900">{selectedOrder.orderNumber}</h3>
-                <p className="text-sm text-gray-500">{selectedOrder.orderDate}</p>
+                <p className="text-sm text-gray-500">{formatDateOnly(selectedOrder.orderDate)}</p>
               </div>
               <div className="text-right">
                 {getStatusBadge(selectedOrder.status)}
@@ -439,7 +464,22 @@ const OrderManagement: React.FC = () => {
                 <p className="text-xs font-bold text-gray-400 uppercase mb-2">Informasi Pembeli</p>
                 <p className="font-bold text-gray-800">{selectedOrder.customerName}</p>
                 <p className="text-sm text-gray-600">{selectedOrder.customerEmail}</p>
-                <p className="text-sm text-gray-600 mt-2 italic">"{selectedOrder.shippingAddress}"</p>
+                <div className="mt-3 space-y-1">
+                  <p className="text-xs font-bold text-gray-400 uppercase">Jenis Pesanan</p>
+                  <span className={`inline-flex px-3 py-1 rounded-full text-xs font-medium ${getOrderTypeMeta(selectedOrder.orderType).badge}`}>
+                    {getOrderTypeMeta(selectedOrder.orderType).label}
+                  </span>
+                </div>
+                <div className="mt-3">
+                  <p className="text-xs font-bold text-gray-400 uppercase mb-1">
+                    {selectedOrder.orderType === 'pickup' ? 'Lokasi Penjemputan' : 'Alamat Pengiriman'}
+                  </p>
+                  <p className="text-sm text-gray-600 italic">
+                    {selectedOrder.orderType === 'pickup'
+                      ? `${getStoreName(selectedOrder.storeId)} - ${selectedOrder.shippingAddress}`
+                      : selectedOrder.shippingAddress}
+                  </p>
+                </div>
               </div>
               <div className="bg-green-50 p-4 rounded-xl border border-green-100">
                 <p className="text-xs font-bold text-green-600 uppercase mb-2">Ringkasan Pembayaran</p>

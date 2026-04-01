@@ -11,14 +11,10 @@ import {
 import Modal from './Modal';
 import Cropper, { Point, Area } from 'react-easy-crop';
 import { getCroppedImg } from '@/lib/cropImage';
+import { formatDateOnly } from '@/lib/date';
 
 const formatRupiah = (value: number) =>
   new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(value);
-
-const formatDate = (iso: string) => {
-  const d = new Date(iso);
-  return d.toLocaleString('id-ID', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
-};
 
 const toInputDatetime = (iso: string) => {
   const d = new Date(iso);
@@ -462,7 +458,7 @@ const PromoManagement: React.FC = () => {
                       <div className="flex items-center gap-3">
                         <span className="flex items-center gap-1.5">
                           <Calendar className="w-3.5 h-3.5" />
-                          {formatDate(promo.endDate)}
+                          {formatDateOnly(promo.endDate)}
                         </span>
                       </div>
                     </div>
@@ -562,10 +558,10 @@ const PromoManagement: React.FC = () => {
                       </td>
                       <td className="px-6 py-4 min-w-[150px]">
                         <div className="text-sm text-gray-700 whitespace-nowrap">
-                          {formatDate(promo.startDate)}
+                          {formatDateOnly(promo.startDate)}
                         </div>
                         <div className="text-sm text-gray-500 whitespace-nowrap">
-                          {formatDate(promo.endDate)}
+                          {formatDateOnly(promo.endDate)}
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
@@ -923,8 +919,8 @@ const PromoManagement: React.FC = () => {
                 { label: 'Maks. Potongan', value: viewingPromo.maxDiscountAmount ? formatRupiah(viewingPromo.maxDiscountAmount) : '-' },
                 { label: 'Min. Belanja', value: viewingPromo.minOrderAmount ? formatRupiah(viewingPromo.minOrderAmount) : '-' },
                 { label: 'Penggunaan', value: viewingPromo.usageLimit ? `${viewingPromo.usageCount} / ${viewingPromo.usageLimit}` : `${viewingPromo.usageCount} (tanpa batas)` },
-                { label: 'Mulai', value: formatDate(viewingPromo.startDate) },
-                { label: 'Berakhir', value: formatDate(viewingPromo.endDate) },
+                { label: 'Mulai', value: formatDateOnly(viewingPromo.startDate) },
+                { label: 'Berakhir', value: formatDateOnly(viewingPromo.endDate) },
               ].map(({ label, value }) => (
                 <div key={label} className="bg-gray-50 rounded-lg p-3 border border-gray-100">
                   <div className="text-xs text-gray-500 font-medium">{label}</div>

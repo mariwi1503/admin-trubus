@@ -111,7 +111,7 @@ const Sidebar: React.FC<SidebarProps> = ({
             >
               <div className="flex items-center gap-3">
                 <Icon className={`w-5 h-5 ${isActive ? 'text-green-600' : ''}`} />
-                {!isCollapsed && <span className="font-medium">{item.label}</span>}
+                {!isCollapsed && <span className="font-medium whitespace-nowrap">{item.label}</span>}
               </div>
             </button>
           );

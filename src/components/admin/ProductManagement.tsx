@@ -47,6 +47,8 @@ export default function ProductManagement() {
     sku: '',
     uom: '',
     isDisplayed: true,
+    isPortalDisplayed: true,
+    requiresWoodPackaging: false,
   });
 
   const categories = ['Benih', 'Pupuk', 'Alat', 'Pestisida', 'Perlengkapan'];
@@ -62,6 +64,8 @@ export default function ProductManagement() {
         sku: p.sku || `TRB-12345-XXXX`,
         uom: p.uom || uoms[Math.floor(Math.random() * uoms.length)],
         isDisplayed: p.isDisplayed !== undefined ? p.isDisplayed : true,
+        isPortalDisplayed: p.isPortalDisplayed !== undefined ? p.isPortalDisplayed : true,
+        requiresWoodPackaging: p.requiresWoodPackaging !== undefined ? p.requiresWoodPackaging : false,
         storeId: p.storeId || (Math.floor(Math.random() * 3) + 1).toString(), // Inject dummy storeId
       }));
       setProducts(productsWithDummyData);
@@ -83,6 +87,8 @@ export default function ProductManagement() {
         sku: p.sku || `TRB-${p.id.padStart(4, '0')}`,
         uom: p.uom || uoms[Math.floor(Math.random() * uoms.length)],
         isDisplayed: p.isDisplayed !== undefined ? p.isDisplayed : true,
+        isPortalDisplayed: p.isPortalDisplayed !== undefined ? p.isPortalDisplayed : true,
+        requiresWoodPackaging: p.requiresWoodPackaging !== undefined ? p.requiresWoodPackaging : false,
         storeId: p.storeId || (Math.floor(Math.random() * 3) + 1).toString(), // Inject dummy storeId
       }));
       setProducts(productsWithDummyData);
@@ -158,6 +164,8 @@ export default function ProductManagement() {
         sku: product.sku || '',
         uom: product.uom || 'Pcs',
         isDisplayed: product.isDisplayed ?? true,
+        isPortalDisplayed: product.isPortalDisplayed ?? true,
+        requiresWoodPackaging: product.requiresWoodPackaging ?? false,
       });
     } else {
       setSelectedProduct(null);
@@ -171,6 +179,8 @@ export default function ProductManagement() {
         sku: `TRB-${Math.floor(Math.random() * 10000).toString().padStart(4, '0')}`,
         uom: 'Pcs',
         isDisplayed: true,
+        isPortalDisplayed: true,
+        requiresWoodPackaging: false,
       });
     }
     setIsModalOpen(true);
@@ -360,8 +370,8 @@ export default function ProductManagement() {
                 className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 text-sm bg-gray-50"
               >
                 <option value="all">Semua Tampil</option>
-                <option value="displayed">Tampil di Toko</option>
-                <option value="hidden">Tidak tampil di toko</option>
+                <option value="displayed">Tampil di Aplikasi</option>
+                <option value="hidden">Tidak tampil di aplikasi</option>
               </select>
             </div>
 
@@ -404,10 +414,18 @@ export default function ProductManagement() {
                 />
                 <div className="absolute top-3 left-3 flex flex-col gap-2">
                   <div>{getStatusBadge(product.status)}</div>
+                  {product.requiresWoodPackaging && (
+                    <span className="bg-amber-100 text-amber-700 px-2 py-1 rounded-full text-xs font-semibold shadow-sm">
+                      Packaging Kayu
+                    </span>
+                  )}
                 </div>
                 <div className="absolute top-3 right-3 flex flex-col gap-1 items-end">
                   <span className={`px-2 py-1 rounded-full text-xs font-medium shadow-sm ${product.isDisplayed ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-700'}`}>
-                    {product.isDisplayed ? 'Tampil' : 'Sembunyikan'}
+                    {product.isDisplayed ? 'Aplikasi' : 'Tidak di Aplikasi'}
+                  </span>
+                  <span className={`px-2 py-1 rounded-full text-xs font-medium shadow-sm ${product.isPortalDisplayed ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-700'}`}>
+                    {product.isPortalDisplayed ? 'Portal' : 'Tidak di Portal'}
                   </span>
                   {(() => {
                     const activePromo = getActivePromoForProduct(product.id, dummyPromos);
@@ -490,7 +508,9 @@ export default function ProductManagement() {
                   <th className="text-left px-6 py-4 text-sm font-semibold text-gray-600">Kategori</th>
                   <th className="text-left px-6 py-4 text-sm font-semibold text-gray-600">Harga</th>
                   <th className="text-left px-6 py-4 text-sm font-semibold text-gray-600">Terjual</th>
-                  <th className="text-left px-6 py-4 text-sm font-semibold text-gray-600">Tampil di Toko</th>
+                  <th className="text-left px-6 py-4 text-sm font-semibold text-gray-600">Tampil di Aplikasi</th>
+                  <th className="text-left px-6 py-4 text-sm font-semibold text-gray-600">Tampil di Portal</th>
+                  <th className="text-left px-6 py-4 text-sm font-semibold text-gray-600">Packaging Kayu</th>
                   <th className="text-left px-6 py-4 text-sm font-semibold text-gray-600">Status</th>
                   <th className="text-center px-6 py-4 text-sm font-semibold text-gray-600">Aksi</th>
                 </tr>
@@ -546,6 +566,22 @@ export default function ProductManagement() {
                         : 'bg-gray-100 text-gray-700'
                         }`}>
                         {product.isDisplayed ? 'Iya' : 'Tidak'}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4">
+                      <span className={`px-3 py-1 rounded-full text-xs font-medium ${product.isPortalDisplayed
+                        ? 'bg-emerald-100 text-emerald-700'
+                        : 'bg-slate-100 text-slate-700'
+                        }`}>
+                        {product.isPortalDisplayed ? 'Iya' : 'Tidak'}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4">
+                      <span className={`px-3 py-1 rounded-full text-xs font-medium ${product.requiresWoodPackaging
+                        ? 'bg-amber-100 text-amber-700'
+                        : 'bg-gray-100 text-gray-700'
+                        }`}>
+                        {product.requiresWoodPackaging ? 'Perlu' : 'Tidak'}
                       </span>
                     </td>
                     <td className="px-6 py-4">{getStatusBadge(product.status)}</td>
@@ -631,17 +667,43 @@ export default function ProductManagement() {
                 </div>
               </div>
 
-              <div className="flex items-center gap-2 pt-2">
-                <input
-                  type="checkbox"
-                  id="isDisplayed"
-                  checked={formData.isDisplayed}
-                  onChange={(e) => setFormData({ ...formData, isDisplayed: e.target.checked })}
-                  className="w-4 h-4 text-green-600 border-gray-300 rounded focus:ring-green-500"
-                />
-                <label htmlFor="isDisplayed" className="text-sm font-medium text-gray-700 select-none cursor-pointer">
-                  Tampilkan di Toko
-                </label>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
+                <div className="flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    id="isDisplayed"
+                    checked={formData.isDisplayed}
+                    onChange={(e) => setFormData({ ...formData, isDisplayed: e.target.checked })}
+                    className="w-4 h-4 text-green-600 border-gray-300 rounded focus:ring-green-500"
+                  />
+                  <label htmlFor="isDisplayed" className="text-sm font-medium text-gray-700 select-none cursor-pointer">
+                    Tampilkan di Aplikasi
+                  </label>
+                </div>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    id="isPortalDisplayed"
+                    checked={formData.isPortalDisplayed}
+                    onChange={(e) => setFormData({ ...formData, isPortalDisplayed: e.target.checked })}
+                    className="w-4 h-4 text-green-600 border-gray-300 rounded focus:ring-green-500"
+                  />
+                  <label htmlFor="isPortalDisplayed" className="text-sm font-medium text-gray-700 select-none cursor-pointer">
+                    Tampilkan di Portal
+                  </label>
+                </div>
+                <div className="flex items-center gap-2 sm:col-span-2">
+                  <input
+                    type="checkbox"
+                    id="requiresWoodPackaging"
+                    checked={formData.requiresWoodPackaging}
+                    onChange={(e) => setFormData({ ...formData, requiresWoodPackaging: e.target.checked })}
+                    className="w-4 h-4 text-green-600 border-gray-300 rounded focus:ring-green-500"
+                  />
+                  <label htmlFor="requiresWoodPackaging" className="text-sm font-medium text-gray-700 select-none cursor-pointer">
+                    Memerlukan packaging kayu saat pengiriman
+                  </label>
+                </div>
               </div>
 
               <div className="grid grid-cols-2 gap-4">
