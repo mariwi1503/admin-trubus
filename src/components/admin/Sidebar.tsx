@@ -49,7 +49,7 @@ const menuItems: MenuItem[] = [
   { id: 'promos', label: 'Promo & Flash Sale', icon: Tag, roles: ['super_admin'] },
   { id: 'careers', label: 'Lowongan Kerja', icon: Briefcase, roles: ['super_admin'] },
   { id: 'faqs', label: 'FAQ', icon: MessageCircleQuestion, roles: ['super_admin'] },
-  { id: 'qrcode', label: 'QR Code', icon: QrCode },
+  // { id: 'qrcode', label: 'QR Code', icon: QrCode },
   { id: 'arsip', label: 'Arsip', icon: Archive, roles: ['super_admin'] },
   { id: 'clients', label: 'Klien', icon: Briefcase, roles: ['super_admin'] },
   { id: 'settings', label: 'Pengaturan', icon: Settings, roles: ['super_admin'] },
