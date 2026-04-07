@@ -16,13 +16,13 @@ import OrderManagement from './admin/OrderManagement';
 import SystemSettings from './admin/SystemSettings';
 import ArchiveManagement from './admin/ArchiveManagement';
 import ClientManagement from './admin/ClientManagement';
+import Analytics from './admin/Analytics';
 import QRCodeManagement from './admin/QRCodeManagement';
 import PromoManagement from './admin/PromoManagement';
 import FAQManagement from './admin/FAQManagement';
 import LiveChatManagement from './admin/LiveChatManagement';
-
 import StoreManagement from './admin/StoreManagement';
-
+import CareerManagement from './admin/CareerManagement';
 
 const AppLayout: React.FC = () => {
   const { sidebarOpen, toggleSidebar, user, login, logout } = useAppContext();
@@ -63,6 +63,7 @@ const AppLayout: React.FC = () => {
       experts: 'Kelola Ahli',
       articles: 'Kelola Artikel',
       products: 'Kelola Produk',
+      analytics: 'Analitik',
       'live-chat': 'Live Chat',
       'products-all': 'Semua Produk',
       'products-store': 'Produk di Toko',
@@ -74,6 +75,7 @@ const AppLayout: React.FC = () => {
       arsip: 'Arsip Dokumen',
       clients: 'Kelola Klien',
       qrcode: 'Manajemen QR Code',
+      careers: 'Kelola Karir',
     };
     return titles[currentPage] || 'Dashboard';
   };
@@ -90,6 +92,8 @@ const AppLayout: React.FC = () => {
         return <ArticleManagement />;
       case 'products':
         return <ProductManagement />;
+      case 'analytics':
+        return <Analytics />;
       case 'live-chat':
         return <LiveChatManagement />;
       case 'orders':
@@ -108,6 +112,8 @@ const AppLayout: React.FC = () => {
         return <ClientManagement />;
       case 'qrcode':
         return <QRCodeManagement />;
+      case 'careers':
+        return <CareerManagement />;
       default:
         return <Dashboard />;
     }

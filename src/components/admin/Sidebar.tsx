@@ -17,7 +17,8 @@ import {
   QrCode,
   Store,
   Tag,
-  MessageCircleQuestion
+  MessageCircleQuestion,
+  BarChart3
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -43,8 +44,10 @@ const menuItems: MenuItem[] = [
   { id: 'experts', label: 'Ahli Pertanian', icon: UserCog, roles: ['super_admin'] },
   { id: 'articles', label: 'Artikel', icon: FileText, roles: ['super_admin'] },
   { id: 'products', label: 'Produk', icon: Package },
+  { id: 'analytics', label: 'Analitik', icon: BarChart3 },
   { id: 'orders', label: 'Pesanan', icon: ShoppingCart },
   { id: 'promos', label: 'Promo & Flash Sale', icon: Tag, roles: ['super_admin'] },
+  { id: 'careers', label: 'Lowongan Kerja', icon: Briefcase, roles: ['super_admin'] },
   { id: 'faqs', label: 'FAQ', icon: MessageCircleQuestion, roles: ['super_admin'] },
   { id: 'qrcode', label: 'QR Code', icon: QrCode },
   { id: 'arsip', label: 'Arsip', icon: Archive, roles: ['super_admin'] },

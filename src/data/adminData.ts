@@ -171,6 +171,17 @@ export interface ChatConversation {
   messages: ChatMessage[];
 }
 
+export interface Career {
+  id: string;
+  title: string;
+  location: string;
+  deadline: string;
+  status: 'open' | 'close' | 'draft';
+  type: 'fulltime' | 'parttime' | 'freelance';
+  description: string;
+  qualifications: string[];
+}
+
 // Helper: hitung harga setelah diskon
 export function calculateDiscountedPrice(price: number, promo: Promo): number {
   if (promo.discountType === 'percentage') {
@@ -561,6 +572,84 @@ export const dummyChatConversations: ChatConversation[] = [
       { id: 'chat-5-msg-2', sender: 'customer', content: 'Kalau ada yang siap pakai, boleh direkomendasikan.', timestamp: '2026-03-31T14:05:00+07:00', authorName: 'Nadia Aulia' },
     ],
   },
+];
+
+export const dummyCareers: Career[] = [
+  {
+    id: '1',
+    title: 'Agronomist Senior',
+    location: 'Kantor Pusat - Jakarta',
+    deadline: '2026-06-30',
+    status: 'open',
+    type: 'fulltime',
+    description: 'Bertanggung jawab dalam merencanakan, melaksanakan, dan mengawasi program pertanian berkelanjutan di wilayah binaan.',
+    qualifications: [
+      'Minimal S1 Pertanian/Agronomi',
+      'Pengalaman minimal 5 tahun di bidang yang sama',
+      'Mampu menganalisis masalah pertanian dan memberikan solusi',
+      'Bersedia dinas luar kota',
+    ],
+  },
+  {
+    id: '2',
+    title: 'Customer Service Toko Tani',
+    location: 'Toko Trubus Bandung Pasteur',
+    deadline: '2026-05-15',
+    status: 'open',
+    type: 'fulltime',
+    description: 'Melayani pelanggan baik secara langsung maupun online, memberikan informasi produk, dan menangani komplain.',
+    qualifications: [
+      'Minimal SMA/SMK sederajat',
+      'Memiliki kemampuan komunikasi yang baik',
+      'Berpenampilan menarik dan ramah',
+      'Mampu mengoperasikan komputer (Ms. Office)',
+    ],
+  },
+  {
+    id: '3',
+    title: 'Content Writer (Agriculture)',
+    location: 'Remote',
+    deadline: '2026-05-30',
+    status: 'open',
+    type: 'freelance',
+    description: 'Menulis artikel edukatif dan informatif terkait pertanian, perkebunan, dan peternakan untuk blog dan sosial media.',
+    qualifications: [
+      'Memiliki passion di bidang menulis dan pertanian',
+      'Mampu membuat artikel yang SEO friendly',
+      'Portofolio tulisan minimal 3 artikel',
+      'Kreatif dan inovatif',
+    ],
+  },
+  {
+    id: '4',
+    title: 'SPG / SPB Event Pameran',
+    location: 'Berbagai Kota',
+    deadline: '2026-04-30',
+    status: 'close',
+    type: 'parttime',
+    description: 'Mempromosikan produk di event pameran pertanian, mencapai target penjulan harian.',
+    qualifications: [
+      'Pria/Wanita, usia maksimal 28 tahun',
+      'Percaya diri dan komunikatif',
+      'Memiliki pengalaman sebagai SPG/SPB event',
+      'Bersedia bekerja di akhir pekan',
+    ],
+  },
+  {
+    id: '5',
+    title: 'Social Media Specialist',
+    location: 'Kantor Pusat - Jakarta',
+    deadline: '2026-07-15',
+    status: 'draft',
+    type: 'fulltime',
+    description: 'Mengelola akun media sosial Trubus, membuat content plan, dan meningkatkan engagement followers.',
+    qualifications: [
+      'Minimal S1 Ilmu Komunikasi/DKV/Marketing',
+      'Menguasai tools analitik media sosial',
+      'Up to date dengan tren terkini',
+      'Bisa desain grafis dasar adalah nilai plus',
+    ],
+  }
 ];
 
 export const defaultSystemSettings: SystemSettings = {
