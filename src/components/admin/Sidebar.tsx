@@ -18,7 +18,8 @@ import {
   Tag,
   MessageCircleQuestion,
   BarChart3,
-  Images
+  Images,
+  QrCode
 } from 'lucide-react';
 import { hasPageAccess, UserRole } from '@/lib/rbac';
 
@@ -50,6 +51,7 @@ const menuItems: MenuItem[] = [
   { id: 'promos', label: 'Promo & Flash Sale', icon: Tag },
   { id: 'careers', label: 'Lowongan Kerja', icon: Briefcase },
   { id: 'faqs', label: 'FAQ', icon: MessageCircleQuestion },
+  { id: 'qrcode', label: 'QR Code', icon: QrCode },
   { id: 'arsip', label: 'Arsip', icon: Archive },
   { id: 'clients', label: 'Klien', icon: Briefcase },
   { id: 'settings', label: 'Pengaturan', icon: Settings },
