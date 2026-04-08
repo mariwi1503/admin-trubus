@@ -1,10 +1,12 @@
+import { UserRole } from '@/lib/rbac';
+
 // Types
 export interface User {
   id: string;
   name: string;
   email: string;
   phone: string;
-  role: 'customer' | 'super_admin' | 'store_admin'; // Updated role
+  role: UserRole;
   storeId?: string; // Added storeId
   status: 'active' | 'inactive' | 'banned';
   joinDate: string;
@@ -247,7 +249,8 @@ export const dummyUsers: User[] = [
   { id: '9', name: 'Irfan Hakim', email: 'irfan@email.com', phone: '081234567898', role: 'customer', status: 'active', joinDate: '2024-03-28', totalOrders: 11, totalSpent: 2100000, avatar: 'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=100&h=100&fit=crop' },
   { id: '10', name: 'Joko Widodo', email: 'joko@email.com', phone: '081234567899', role: 'customer', status: 'active', joinDate: '2024-06-01', totalOrders: 4, totalSpent: 720000, avatar: 'https://images.unsplash.com/photo-1463453091185-61582044d556?w=100&h=100&fit=crop' },
   { id: '11', name: 'Kartini Sari', email: 'kartini@email.com', phone: '081234567800', role: 'customer', status: 'active', joinDate: '2024-04-18', totalOrders: 7, totalSpent: 1350000, avatar: 'https://images.unsplash.com/photo-1489424731084-a5d8b219a5bb?w=100&h=100&fit=crop' },
-  { id: '12', name: 'Admin Bandung', email: 'bandung@tokotani.com', phone: '081234567801', role: 'store_admin', storeId: '2', status: 'active', joinDate: '2023-11-15', totalOrders: 0, totalSpent: 0, avatar: 'https://images.unsplash.com/photo-1507591064344-4c6ce005b128?w=100&h=100&fit=crop' },
+  { id: '12', name: 'Admin Operasional Bandung', email: 'bandung@tokotani.com', phone: '081234567801', role: 'operational', storeId: '2', status: 'active', joinDate: '2023-11-15', totalOrders: 0, totalSpent: 0, avatar: 'https://images.unsplash.com/photo-1507591064344-4c6ce005b128?w=100&h=100&fit=crop' },
+  { id: '13', name: 'Dina HR Trubus', email: 'hr@tokotani.com', phone: '081234567802', role: 'hr', status: 'active', joinDate: '2024-01-08', totalOrders: 0, totalSpent: 0, avatar: 'https://images.unsplash.com/photo-1544723795-3fb6469f5b39?w=100&h=100&fit=crop' },
 ];
 
 export const dummyExperts: Expert[] = [

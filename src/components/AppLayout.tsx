@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useAppContext } from '@/contexts/AppContext';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { initializeDatabase } from '@/lib/supabaseService';
+import { hasPageAccess } from '@/lib/rbac';
 
 // Admin Components
 import LoginPage from './admin/LoginPage';
@@ -12,6 +13,7 @@ import UserManagement from './admin/UserManagement';
 import ExpertManagement from './admin/ExpertManagement';
 import ArticleManagement from './admin/ArticleManagement';
 import ProductManagement from './admin/ProductManagement';
+import GalleryManagement from './admin/GalleryManagement';
 import OrderManagement from './admin/OrderManagement';
 import SystemSettings from './admin/SystemSettings';
 import ArchiveManagement from './admin/ArchiveManagement';
@@ -39,7 +41,7 @@ const AppLayout: React.FC = () => {
 
     // Allow any password for demo purposes as long as email matches a user in dummyUsers
     // In a real app, strict password checking would be here
-    const success = login(email);
+    const success = await login(email);
 
     if (success) {
       // Initialize database with seed data if needed
@@ -56,12 +58,19 @@ const AppLayout: React.FC = () => {
     setCurrentPage('dashboard');
   };
 
+  useEffect(() => {
+    if (user?.role && !hasPageAccess(user.role, currentPage as Parameters<typeof hasPageAccess>[1])) {
+      setCurrentPage('dashboard');
+    }
+  }, [currentPage, user?.role]);
+
   const getPageTitle = () => {
     const titles: Record<string, string> = {
       dashboard: 'Dashboard',
       users: 'Kelola User',
       experts: 'Kelola Ahli',
       articles: 'Kelola Artikel',
+      gallery: 'Galeri Kegiatan',
       products: 'Kelola Produk',
       analytics: 'Analitik',
       'live-chat': 'Live Chat',
@@ -90,6 +99,8 @@ const AppLayout: React.FC = () => {
         return <ExpertManagement />;
       case 'articles':
         return <ArticleManagement />;
+      case 'gallery':
+        return <GalleryManagement />;
       case 'products':
         return <ProductManagement />;
       case 'analytics':

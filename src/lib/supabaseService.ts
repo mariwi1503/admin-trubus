@@ -5,6 +5,7 @@ import {
   dummyPaymentMethods, defaultSystemSettings
 } from '@/data/adminData';
 import { formatDateOnly } from '@/lib/date';
+import { normalizeUserRole, UserRole } from '@/lib/rbac';
 
 
 // Type definitions for database rows
@@ -13,7 +14,7 @@ interface DbUser {
   name: string;
   email: string;
   phone: string;
-  role: 'customer' | 'super_admin' | 'store_admin';
+  role: UserRole;
 
   status: 'active' | 'inactive' | 'banned';
   join_date: string;
@@ -115,7 +116,7 @@ const dbToUser = (db: DbUser): User => ({
   name: db.name,
   email: db.email,
   phone: db.phone,
-  role: db.role,
+  role: normalizeUserRole(db.role),
   status: db.status,
   joinDate: formatDateOnly(db.join_date),
   totalOrders: db.total_orders,
@@ -127,7 +128,7 @@ const userToDb = (user: Partial<User>): Partial<DbUser> => ({
   name: user.name,
   email: user.email,
   phone: user.phone,
-  role: user.role,
+  role: user.role ? normalizeUserRole(user.role) : undefined,
   status: user.status,
   join_date: user.joinDate,
   total_orders: user.totalOrders,

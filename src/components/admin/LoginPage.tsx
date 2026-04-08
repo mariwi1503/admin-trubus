@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Leaf, Eye, EyeOff, Zap, Lock, Mail, Shield, Store } from 'lucide-react';
+import { Eye, EyeOff, Lock, Mail, Shield, Settings2, Users } from 'lucide-react';
 
 
 interface LoginPageProps {
@@ -68,7 +68,7 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
           </div>
 
           {/* Quick Login Buttons */}
-          <div className="grid grid-cols-2 gap-3 mb-6">
+          <div className="grid grid-cols-3 gap-3 mb-6">
             <button
               onClick={() => handleQuickLogin('super@tokotani.com')}
               disabled={isLoading}
@@ -83,8 +83,17 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
               disabled={isLoading}
               className="flex flex-col items-center justify-center gap-2 p-3 bg-gradient-to-br from-blue-500 to-indigo-600 text-white rounded-xl hover:from-blue-600 hover:to-indigo-700 transition-all shadow-lg shadow-blue-500/20 disabled:opacity-50"
             >
-              <Store className="w-5 h-5" />
-              <span className="text-xs font-bold">Admin Toko</span>
+              <Settings2 className="w-5 h-5" />
+              <span className="text-xs font-bold">Operational</span>
+            </button>
+
+            <button
+              onClick={() => handleQuickLogin('hr@tokotani.com')}
+              disabled={isLoading}
+              className="flex flex-col items-center justify-center gap-2 p-3 bg-gradient-to-br from-fuchsia-500 to-pink-600 text-white rounded-xl hover:from-fuchsia-600 hover:to-pink-700 transition-all shadow-lg shadow-fuchsia-500/20 disabled:opacity-50"
+            >
+              <Users className="w-5 h-5" />
+              <span className="text-xs font-bold">HR</span>
             </button>
           </div>
 
@@ -180,8 +189,13 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
               <p><span className="font-medium">Password:</span> admin123</p>
             </div>
             <div className="text-xs text-gray-600 space-y-1">
-              <p className="font-bold border-b pb-1">Admin Toko:</p>
+              <p className="font-bold border-b pb-1">Operational:</p>
               <p><span className="font-medium">Email:</span> bandung@tokotani.com</p>
+              <p><span className="font-medium">Password:</span> admin123</p>
+            </div>
+            <div className="text-xs text-gray-600 space-y-1">
+              <p className="font-bold border-b pb-1">HR:</p>
+              <p><span className="font-medium">Email:</span> hr@tokotani.com</p>
               <p><span className="font-medium">Password:</span> admin123</p>
             </div>
           </div>

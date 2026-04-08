@@ -20,6 +20,7 @@ import { statisticsData, dummyOrders, dummyProducts, dummyStores, dummyUsers, du
 import { useAppContext } from '@/contexts/AppContext';
 import { fetchPortalAnalyticsSnapshot, PortalAnalyticsSnapshot } from '@/lib/portalAnalyticsService';
 import { fetchMobileAnalyticsSnapshot, MobileAnalyticsSnapshot } from '@/lib/mobileAnalyticsService';
+import { isStoreScopedRole } from '@/lib/rbac';
 
 const formatCurrency = (value: number) => {
   return new Intl.NumberFormat('id-ID', {
@@ -171,7 +172,7 @@ const Dashboard: React.FC = () => {
 
       {/* Header with Store Filter */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        {user?.role !== 'store_admin' ? (
+        {!isStoreScopedRole(user?.role) ? (
           <div className="flex items-center gap-2 bg-white p-2 rounded-lg shadow-sm border border-gray-100">
             <Store className="w-4 h-4 text-gray-500" />
             <select

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { User, dummyOrders } from '@/data/adminData';
 import { ChevronLeft, Save, User as UserIcon, Phone, Mail, Shield, ShieldCheck, Activity, ShoppingBag, Coins, MessageSquare, ExternalLink, MapPin } from 'lucide-react';
+import { AdminRole, getRoleLabel, rolePermissions, UserRole } from '@/lib/rbac';
 import { formatDateOnly } from '@/lib/date';
 
 interface UserDetailProps {
@@ -34,7 +35,7 @@ const UserDetail: React.FC<UserDetailProps> = ({ user, onBack, onSave }) => {
         name: '',
         email: '',
         phone: '',
-        role: 'customer',
+        role: 'operational',
         status: 'active',
         province: '',
         city: '',
@@ -184,14 +185,33 @@ const UserDetail: React.FC<UserDetailProps> = ({ user, onBack, onSave }) => {
                                 </label>
                                 <select
                                     value={formData.role}
-                                    onChange={(e) => setFormData({ ...formData, role: e.target.value as 'customer' | 'super_admin' | 'store_admin' })}
+                                    onChange={(e) => setFormData({ ...formData, role: e.target.value as UserRole })}
                                     className="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 bg-gray-50/50 focus:bg-white transition-all"
                                 >
                                     <option value="customer">Customer</option>
-                                    <option value="store_admin">Admin Toko</option>
+                                    <option value="operational">Operational</option>
+                                    <option value="hr">HR</option>
                                     <option value="super_admin">Super Admin</option>
                                 </select>
                             </div>
+
+                            {formData.role && formData.role !== 'customer' && (
+                                <div className="rounded-xl border border-emerald-100 bg-emerald-50 p-4">
+                                    <p className="text-sm font-semibold text-emerald-900">
+                                        Akses Role {getRoleLabel(formData.role)}
+                                    </p>
+                                    <p className="mt-1 text-xs text-emerald-700">
+                                        {rolePermissions[formData.role as AdminRole]?.label}
+                                    </p>
+                                    <div className="mt-3 flex flex-wrap gap-2">
+                                        {rolePermissions[formData.role as AdminRole]?.pages.map((page) => (
+                                            <span key={page} className="rounded-full bg-white px-3 py-1 text-xs font-medium text-emerald-800">
+                                                {page}
+                                            </span>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
 
                             <div>
                                 <label className="block text-sm font-semibold text-gray-700 mb-1.5 flex items-center gap-2">

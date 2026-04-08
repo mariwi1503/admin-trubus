@@ -5,6 +5,7 @@ import { usersService } from '@/lib/supabaseService';
 import Modal from './Modal';
 import UserDetail from './UserDetail';
 import { formatDateOnly, getCurrentDateOnly } from '@/lib/date';
+import { getRoleBadgeClass, getRoleLabel, normalizeUserRole, UserRole } from '@/lib/rbac';
 
 const formatCurrency = (value: number) => {
   return new Intl.NumberFormat('id-ID', {
@@ -79,7 +80,7 @@ const UserManagement: React.FC = () => {
           name: formData.name || '',
           email: formData.email || '',
           phone: formData.phone || '',
-          role: (formData.role as 'customer' | 'super_admin' | 'store_admin') || 'customer',
+          role: (formData.role as UserRole) || 'customer',
           status: (formData.status as 'active' | 'inactive' | 'banned') || 'active',
           joinDate: getCurrentDateOnly(),
           totalOrders: 0,
@@ -139,15 +140,11 @@ const UserManagement: React.FC = () => {
     );
   };
 
-  const getRoleBadge = (role: string) => {
-    if (role === 'super_admin') {
-      return <span className="px-3 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-700">Super Admin</span>;
-    }
-    if (role === 'store_admin') {
-      return <span className="px-3 py-1 rounded-full text-xs font-medium bg-indigo-100 text-indigo-700">Admin Toko</span>;
-    }
-    return <span className="px-3 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-700">Customer</span>;
-  };
+  const getRoleBadge = (role: string) => (
+    <span className={`px-3 py-1 rounded-full text-xs font-medium ${getRoleBadgeClass(role)}`}>
+      {getRoleLabel(role)}
+    </span>
+  );
 
   if (viewMode === 'detail') {
     return (
@@ -243,7 +240,8 @@ const UserManagement: React.FC = () => {
               >
                 <option value="all">Semua Role</option>
                 <option value="customer">Customer</option>
-                <option value="store_admin">Admin Toko</option>
+                <option value="operational">Operational</option>
+                <option value="hr">HR</option>
                 <option value="super_admin">Super Admin</option>
               </select>
             </div>
@@ -310,7 +308,7 @@ const UserManagement: React.FC = () => {
                       <p className="text-sm text-gray-700">{user.email}</p>
                       <p className="text-xs text-gray-500">{user.phone}</p>
                     </td>
-                    <td className="px-6 py-4">{getRoleBadge(user.role)}</td>
+                    <td className="px-6 py-4">{getRoleBadge(normalizeUserRole(user.role))}</td>
                     <td className="px-6 py-4">{getStatusBadge(user.status)}</td>
                     <td className="px-6 py-4 text-sm text-gray-700">{user.totalOrders}</td>
                     <td className="px-6 py-4 text-sm font-medium text-gray-700">{formatCurrency(user.totalSpent)}</td>

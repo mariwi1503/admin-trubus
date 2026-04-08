@@ -1,6 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import { Search, Bell, User, ChevronDown, Menu, MessageCircle, Send, X, Minus } from 'lucide-react';
 import { useAppContext } from '@/contexts/AppContext';
+import { getRoleLabel, isStoreScopedRole } from '@/lib/rbac';
 
 interface HeaderProps {
   pageTitle: string;
@@ -30,7 +31,7 @@ const Header: React.FC<HeaderProps> = ({ pageTitle, adminName, onMenuClick, onLo
   const visibleChats = useMemo(() => {
     return chatConversations
       .filter((conversation) =>
-        user?.role === 'store_admin' && user.storeId ? conversation.storeId === user.storeId : true
+        isStoreScopedRole(user?.role) && user?.storeId ? conversation.storeId === user.storeId : true
       )
       .filter((conversation) => {
         const keyword = chatSearch.toLowerCase();
@@ -192,7 +193,7 @@ const Header: React.FC<HeaderProps> = ({ pageTitle, adminName, onMenuClick, onLo
             </div>
             <div className="hidden md:block text-left">
               <p className="text-sm font-medium text-gray-700">{adminName}</p>
-              <p className="text-xs text-gray-500">Administrator</p>
+              <p className="text-xs text-gray-500">{getRoleLabel(user?.role)}</p>
             </div>
             <ChevronDown className="w-4 h-4 text-gray-400 hidden md:block" />
           </button>

@@ -8,6 +8,7 @@ import { useAppContext } from '@/contexts/AppContext';
 import { Order, dummyStores, dummyOrders, dummyPromos } from '@/data/adminData';
 import { ordersService } from '@/lib/supabaseService';
 import { formatDateOnly } from '@/lib/date';
+import { isStoreScopedRole } from '@/lib/rbac';
 import Modal from './Modal';
 
 const formatCurrency = (value: number) => {
@@ -75,13 +76,11 @@ const OrderManagement: React.FC = () => {
 
 
   const filteredOrders = orders.filter(order => {
-    // RBAC Filter: If store_admin, only show orders from their store
-    if (user?.role === 'store_admin' && user.storeId && order.storeId !== user.storeId) {
+    if (isStoreScopedRole(user?.role) && user?.storeId && order.storeId !== user.storeId) {
       return false;
     }
 
-    // Store Filter (Super Admin)
-    if (user?.role !== 'store_admin' && selectedStore !== 'all' && order.storeId !== selectedStore) {
+    if (!isStoreScopedRole(user?.role) && selectedStore !== 'all' && order.storeId !== selectedStore) {
       return false;
     }
 
@@ -244,16 +243,16 @@ const OrderManagement: React.FC = () => {
             <button 
               onClick={() => setShowFilters(!showFilters)}
               className={`flex items-center justify-center gap-2 px-4 py-2.5 border rounded-lg transition-colors h-11 ${
-                [user?.role !== 'store_admin' ? selectedStore : 'all', filterStatus, filterPayment].filter(f => f !== 'all').length > 0 
+                [!isStoreScopedRole(user?.role) ? selectedStore : 'all', filterStatus, filterPayment].filter(f => f !== 'all').length > 0 
                   ? 'border-green-500 text-green-700 bg-green-50' 
                   : 'border-gray-200 text-gray-700 hover:bg-gray-50'
               }`}
             >
               <Filter className="w-5 h-5" />
               <span className="hidden sm:inline">Filter</span>
-              {[user?.role !== 'store_admin' ? selectedStore : 'all', filterStatus, filterPayment].filter(f => f !== 'all').length > 0 && (
+              {[!isStoreScopedRole(user?.role) ? selectedStore : 'all', filterStatus, filterPayment].filter(f => f !== 'all').length > 0 && (
                 <span className="bg-green-600 text-white text-xs px-2 py-0.5 rounded-full ml-1 font-semibold">
-                  {[user?.role !== 'store_admin' ? selectedStore : 'all', filterStatus, filterPayment].filter(f => f !== 'all').length}
+                  {[!isStoreScopedRole(user?.role) ? selectedStore : 'all', filterStatus, filterPayment].filter(f => f !== 'all').length}
                 </span>
               )}
             </button>
@@ -277,7 +276,7 @@ const OrderManagement: React.FC = () => {
         {/* Filter Drawer */}
         {showFilters && (
           <div className="p-4 bg-white border border-gray-100 shadow-sm rounded-xl grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 animate-in fade-in slide-in-from-top-2">
-            {user?.role !== 'store_admin' && (
+            {!isStoreScopedRole(user?.role) && (
               <div>
                 <label className="block text-xs font-semibold text-gray-500 mb-1.5 uppercase tracking-wider">Toko</label>
                 <select

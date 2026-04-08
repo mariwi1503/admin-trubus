@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import {
   LayoutDashboard,
   Users,
@@ -14,12 +14,13 @@ import {
   Leaf,
   Archive,
   Briefcase,
-  QrCode,
   Store,
   Tag,
   MessageCircleQuestion,
-  BarChart3
+  BarChart3,
+  Images
 } from 'lucide-react';
+import { hasPageAccess, UserRole } from '@/lib/rbac';
 
 interface SidebarProps {
   currentPage: string;
@@ -27,32 +28,31 @@ interface SidebarProps {
   isCollapsed: boolean;
   setIsCollapsed: (collapsed: boolean) => void;
   onLogout: () => void;
-  userRole?: 'super_admin' | 'store_admin' | 'customer' | 'admin';
+  userRole?: UserRole;
 }
 
 interface MenuItem {
-  id: string;
+  id: Parameters<typeof hasPageAccess>[1];
   label: string;
   icon: React.ElementType;
-  roles?: string[]; // Allowed roles
 }
 
 const menuItems: MenuItem[] = [
   { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
-  { id: 'stores', label: 'Kelola Toko', icon: Store, roles: ['super_admin'] },
-  { id: 'users', label: 'Pengguna', icon: Users, roles: ['super_admin'] },
-  { id: 'experts', label: 'Ahli Pertanian', icon: UserCog, roles: ['super_admin'] },
-  { id: 'articles', label: 'Artikel', icon: FileText, roles: ['super_admin'] },
+  { id: 'stores', label: 'Kelola Toko', icon: Store },
+  { id: 'users', label: 'Pengguna', icon: Users },
+  { id: 'experts', label: 'Ahli Pertanian', icon: UserCog },
+  { id: 'articles', label: 'Artikel', icon: FileText },
+  { id: 'gallery', label: 'Galeri', icon: Images },
   { id: 'products', label: 'Produk', icon: Package },
   { id: 'analytics', label: 'Analitik', icon: BarChart3 },
   { id: 'orders', label: 'Pesanan', icon: ShoppingCart },
-  { id: 'promos', label: 'Promo & Flash Sale', icon: Tag, roles: ['super_admin'] },
-  { id: 'careers', label: 'Lowongan Kerja', icon: Briefcase, roles: ['super_admin'] },
-  { id: 'faqs', label: 'FAQ', icon: MessageCircleQuestion, roles: ['super_admin'] },
-  // { id: 'qrcode', label: 'QR Code', icon: QrCode },
-  { id: 'arsip', label: 'Arsip', icon: Archive, roles: ['super_admin'] },
-  { id: 'clients', label: 'Klien', icon: Briefcase, roles: ['super_admin'] },
-  { id: 'settings', label: 'Pengaturan', icon: Settings, roles: ['super_admin'] },
+  { id: 'promos', label: 'Promo & Flash Sale', icon: Tag },
+  { id: 'careers', label: 'Lowongan Kerja', icon: Briefcase },
+  { id: 'faqs', label: 'FAQ', icon: MessageCircleQuestion },
+  { id: 'arsip', label: 'Arsip', icon: Archive },
+  { id: 'clients', label: 'Klien', icon: Briefcase },
+  { id: 'settings', label: 'Pengaturan', icon: Settings },
 ];
 
 const Sidebar: React.FC<SidebarProps> = ({
@@ -63,13 +63,7 @@ const Sidebar: React.FC<SidebarProps> = ({
   onLogout,
   userRole
 }) => {
-  // Filter menu items based on user role
-  const filteredMenuItems = menuItems.filter(item => {
-    if (!item.roles) return true; // Available for all if roles not specified
-    if (!userRole) return false;
-    // Map 'admin' to 'super_admin' for backward compatibility if needed, or stick to strict checking
-    return item.roles.includes(userRole);
-  });
+  const filteredMenuItems = menuItems.filter((item) => userRole && hasPageAccess(userRole, item.id));
 
   return (
     <aside

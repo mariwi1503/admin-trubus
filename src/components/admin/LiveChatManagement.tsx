@@ -13,6 +13,7 @@ import {
 } from 'lucide-react';
 import { ChatConversation } from '@/data/adminData';
 import { useAppContext } from '@/contexts/AppContext';
+import { isStoreScopedRole } from '@/lib/rbac';
 
 const filterOptions = [
   { id: 'all', label: 'Semua' },
@@ -57,7 +58,7 @@ const LiveChatManagement: React.FC = () => {
 
     return chatConversations
       .filter((conversation) => {
-        if (user?.role === 'store_admin' && user.storeId && conversation.storeId !== user.storeId) {
+        if (isStoreScopedRole(user?.role) && user?.storeId && conversation.storeId !== user.storeId) {
           return false;
         }
 
@@ -104,7 +105,7 @@ const LiveChatManagement: React.FC = () => {
 
   const stats = useMemo(() => {
     const available = chatConversations.filter((conversation) =>
-      user?.role === 'store_admin' && user.storeId ? conversation.storeId === user.storeId : true
+      isStoreScopedRole(user?.role) && user?.storeId ? conversation.storeId === user.storeId : true
     );
 
     return [

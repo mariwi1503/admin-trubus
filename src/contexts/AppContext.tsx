@@ -2,13 +2,15 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 import { toast } from '@/components/ui/use-toast';
 import { ChatConversation, User, dummyChatConversations, dummyUsers } from '@/data/adminData';
+import { usersService } from '@/lib/supabaseService';
+import { isAdminRole, normalizeUserRole } from '@/lib/rbac';
 
 interface AppContextType {
   sidebarOpen: boolean;
   toggleSidebar: () => void;
   user: User | null;
   chatConversations: ChatConversation[];
-  login: (email: string) => boolean;
+  login: (email: string) => Promise<boolean>;
   logout: () => void;
   assignChatToCurrentUser: (conversationId: string) => void;
   resolveChat: (conversationId: string) => void;
@@ -21,7 +23,7 @@ const defaultAppContext: AppContextType = {
   toggleSidebar: () => { },
   user: null,
   chatConversations: [],
-  login: () => false,
+  login: async () => false,
   logout: () => { },
   assignChatToCurrentUser: () => { },
   resolveChat: () => { },
@@ -38,24 +40,38 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [user, setUser] = useState<User | null>(null);
   const [chatConversations, setChatConversations] = useState<ChatConversation[]>(dummyChatConversations);
 
+  const findUserByEmail = async (email: string) => {
+    try {
+      const users = await usersService.getAll();
+      const matchedUser = users.find((item) => item.email === email);
+      if (matchedUser) {
+        return { ...matchedUser, role: normalizeUserRole(matchedUser.role) };
+      }
+    } catch (error) {
+      console.error('Gagal mengambil user dari database:', error);
+    }
+
+    const fallbackUser = dummyUsers.find((item) => item.email === email);
+    return fallbackUser ? { ...fallbackUser, role: normalizeUserRole(fallbackUser.role) } : null;
+  };
+
   useEffect(() => {
-    // Check for existing session
     const session = localStorage.getItem('admin_session');
     if (session) {
-      try {
-        const sessionData = JSON.parse(session);
-        // Validate against dummyUsers to get full user object including role
-        const validUser = dummyUsers.find(u => u.email === sessionData.email);
-        if (validUser) {
-          setUser(validUser);
-        } else {
-          // If user not found in dummy data (e.g. data changed), clear session
+      void (async () => {
+        try {
+          const sessionData = JSON.parse(session);
+          const validUser = await findUserByEmail(sessionData.email);
+          if (validUser && isAdminRole(validUser.role)) {
+            setUser(validUser);
+          } else {
+            localStorage.removeItem('admin_session');
+          }
+        } catch (e) {
+          console.error('Invalid session data', e);
           localStorage.removeItem('admin_session');
         }
-      } catch (e) {
-        console.error("Invalid session data", e);
-        localStorage.removeItem('admin_session');
-      }
+      })();
     }
   }, []);
 
@@ -63,15 +79,15 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setSidebarOpen(prev => !prev);
   };
 
-  const login = (email: string): boolean => {
-    const foundUser = dummyUsers.find(u => u.email === email && (u.role === 'super_admin' || u.role === 'store_admin'));
+  const login = async (email: string): Promise<boolean> => {
+    const foundUser = await findUserByEmail(email);
 
-    if (foundUser) {
+    if (foundUser && isAdminRole(foundUser.role)) {
       if (foundUser.status !== 'active') {
         toast({
-          title: "Akun Tidak Aktif",
-          description: "Akun Anda sedang tidak aktif atau dibanned.",
-          variant: "destructive"
+          title: 'Akun Tidak Aktif',
+          description: 'Akun Anda sedang tidak aktif atau dibanned.',
+          variant: 'destructive'
         });
         return false;
       }
@@ -80,13 +96,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       localStorage.setItem('admin_session', JSON.stringify({
         email: foundUser.email,
         name: foundUser.name,
-        role: foundUser.role,
+        role: normalizeUserRole(foundUser.role),
         storeId: foundUser.storeId,
         loginTime: new Date().toISOString(),
       }));
 
       toast({
-        title: "Login Berhasil",
+        title: 'Login Berhasil',
         description: `Selamat datang kembali, ${foundUser.name}`,
       });
       return true;
